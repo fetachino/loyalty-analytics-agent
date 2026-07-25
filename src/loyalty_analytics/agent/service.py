@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 from sqlalchemy.orm import Session
 
 from loyalty_analytics.agent.tools import TOOL_DEFINITIONS, execute_tool
@@ -13,6 +15,7 @@ for unrelated content, database changes, raw SQL, secrets, or personal customer 
 refuse and explain the supported analytics scope. Keep answers concise, label monetary values,
 and state when the available aggregate data cannot answer a question.
 """.strip()
+tracer = trace.get_tracer(__name__)
 
 
 class ResponsesAPI(Protocol):
@@ -37,9 +40,22 @@ class LoyaltyAnalyticsAgent:
         self._max_turns = max_turns
 
     def answer(self, question: str, db: Session) -> AgentResult:
+        with tracer.start_as_current_span("agent.answer") as span:
+            span.set_attribute("gen_ai.request.model", self._model)
+            span.set_attribute("agent.max_turns", self._max_turns)
+            try:
+                result = self._answer(question, db)
+            except Exception as exc:
+                span.record_exception(exc)
+                span.set_status(Status(StatusCode.ERROR, type(exc).__name__))
+                raise
+            span.set_attribute("agent.tools_used", result.tools_used)
+            span.set_attribute("agent.tool_count", len(result.tools_used))
+            return result
+
+    def _answer(self, question: str, db: Session) -> AgentResult:
         input_items: list[Any] = [{"role": "user", "content": question}]
         tools_used: list[str] = []
-
         for _ in range(self._max_turns):
             response = self._responses_api.create(
                 model=self._model,
@@ -63,10 +79,16 @@ class LoyaltyAnalyticsAgent:
                 )
 
             for call in function_calls:
-                try:
-                    output = execute_tool(call.name, call.arguments, db)
-                except (ValueError, TypeError) as exc:
-                    raise AgentExecutionError("The model requested an invalid tool call") from exc
+                with tracer.start_as_current_span(
+                    "agent.tool",
+                    attributes={"agent.tool.name": call.name},
+                ):
+                    try:
+                        output = execute_tool(call.name, call.arguments, db)
+                    except (ValueError, TypeError) as exc:
+                        raise AgentExecutionError(
+                            "The model requested an invalid tool call"
+                        ) from exc
                 tools_used.append(call.name)
                 input_items.append(
                     {

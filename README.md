@@ -26,6 +26,7 @@ data into an authenticated executive dashboard and grounded AI-assisted analysis
 - Per-user analysis history, configurable rate limiting, and graceful provider error handling
 - Production deployment through a Render Blueprint with health probes and structured logs
 - Automated formatting, linting, strict typing, tests, coverage enforcement, and container builds
+- A versioned agent evaluation suite with safety cases, structured judging, and OpenTelemetry spans
 
 The deployed demo contains **100 customers, 1,000 transactions, and 100 reward redemptions**.
 
@@ -142,6 +143,9 @@ probes and static login assets remain public.
 - Secrets are injected through environment variables and `.env` is excluded from version control.
 
 See [SECURITY.md](SECURITY.md) for reporting and credential-handling guidance.
+
+The agent's golden dataset, deterministic regression scoring, optional structured LLM judge, and
+privacy-conscious tracing design are documented in [the evaluation guide](docs/evaluations.md).
 
 ## Quality gates
 
