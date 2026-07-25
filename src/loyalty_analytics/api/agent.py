@@ -8,12 +8,17 @@ from loyalty_analytics.agent.service import (
     LoyaltyAnalyticsAgent,
     ResponsesAPI,
 )
+from loyalty_analytics.api.auth import get_current_user
 from loyalty_analytics.api.dependencies import DatabaseSession
 from loyalty_analytics.config import get_settings
 from loyalty_analytics.rate_limit import enforce_agent_rate_limit
 from loyalty_analytics.schemas import AgentQuery, AgentResponse
 
-router = APIRouter(prefix="/api/v1/agent", tags=["AI Agent"])
+router = APIRouter(
+    prefix="/api/v1/agent",
+    tags=["AI Agent"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def get_responses_api() -> ResponsesAPI:

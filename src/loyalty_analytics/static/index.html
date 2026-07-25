@@ -12,6 +12,31 @@
     <script src="/static/app.js" defer></script>
   </head>
   <body>
+    <section id="login-screen" class="login-screen" aria-labelledby="login-heading">
+      <form id="login-form" class="login-card">
+        <span class="brand-mark login-mark" aria-hidden="true">
+          <svg viewBox="0 0 36 36" role="img">
+            <path d="M18 3 31 10.5v15L18 33 5 25.5v-15L18 3Z" />
+            <path d="m12 18 4 4 8-9" />
+          </svg>
+        </span>
+        <p class="eyebrow">Loyalty Intelligence</p>
+        <h1 id="login-heading">Welcome back</h1>
+        <p>Sign in to access program analytics and the AI analyst.</p>
+        <label for="login-email">Email address</label>
+        <input id="login-email" type="email" autocomplete="username" required />
+        <label for="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          minlength="8"
+          autocomplete="current-password"
+          required
+        />
+        <p id="login-error" class="login-error" role="alert" hidden></p>
+        <button type="submit">Sign in</button>
+      </form>
+    </section>
     <div class="app-shell">
       <aside class="sidebar">
         <a class="brand" href="/" aria-label="Loyalty Intelligence home">
@@ -57,6 +82,8 @@
           </div>
           <div class="topbar-actions">
             <span class="api-status"><i></i> API connected</span>
+            <span id="current-user" class="current-user"></span>
+            <button id="logout-button" class="secondary-button" type="button">Sign out</button>
             <button id="refresh-button" class="secondary-button" type="button">
               <span aria-hidden="true">↻</span> Refresh
             </button>

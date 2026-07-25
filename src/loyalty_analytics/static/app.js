@@ -1,4 +1,7 @@
 const endpoints = {
+  login: "/api/v1/auth/login",
+  logout: "/api/v1/auth/logout",
+  me: "/api/v1/auth/me",
   overview: "/api/v1/analytics/overview",
   categories: "/api/v1/analytics/spending-by-category",
   tiers: "/api/v1/analytics/loyalty-tiers",
@@ -22,6 +25,9 @@ const number = new Intl.NumberFormat("en-US");
 
 async function fetchJson(url, options) {
   const response = await fetch(url, options);
+  if (response.status === 401 && url !== endpoints.login && url !== endpoints.me) {
+    showLogin();
+  }
   if (!response.ok) {
     let detail = "The service could not complete this request.";
     try {
@@ -33,6 +39,28 @@ async function fetchJson(url, options) {
     throw new Error(detail);
   }
   return response.json();
+}
+
+function showLogin(message = "") {
+  document.querySelector("#login-screen").classList.add("visible");
+  const error = document.querySelector("#login-error");
+  error.textContent = message;
+  error.hidden = !message;
+}
+
+function hideLogin(user) {
+  document.querySelector("#login-screen").classList.remove("visible");
+  document.querySelector("#current-user").textContent = user.full_name;
+}
+
+async function initializeSession() {
+  try {
+    const user = await fetchJson(endpoints.me);
+    hideLogin(user);
+    await loadDashboard();
+  } catch {
+    showLogin();
+  }
 }
 
 function createElement(tag, className, text) {
@@ -243,4 +271,33 @@ document.querySelectorAll(".nav-item").forEach((item) => {
   });
 });
 
-loadDashboard();
+document.querySelector("#login-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector("button");
+  button.disabled = true;
+  try {
+    const result = await fetchJson(endpoints.login, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: document.querySelector("#login-email").value,
+        password: document.querySelector("#login-password").value,
+      }),
+    });
+    hideLogin(result.user);
+    document.querySelector("#login-password").value = "";
+    await loadDashboard();
+  } catch (error) {
+    showLogin(error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.querySelector("#logout-button").addEventListener("click", async () => {
+  await fetch(endpoints.logout, { method: "POST" });
+  document.querySelector("#current-user").textContent = "";
+  showLogin();
+});
+
+initializeSession();

@@ -2,10 +2,11 @@ import math
 import uuid
 from typing import Any, TypeVar, cast
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from loyalty_analytics.api.auth import get_current_user
 from loyalty_analytics.api.dependencies import DatabaseSession, PageNumber, PageSize
 from loyalty_analytics.models import Customer, Reward, Transaction
 from loyalty_analytics.schemas import (
@@ -25,7 +26,7 @@ from loyalty_analytics.services.analytics import (
     get_spending_categories,
 )
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(get_current_user)])
 ModelT = TypeVar("ModelT")
 
 

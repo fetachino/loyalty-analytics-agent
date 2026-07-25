@@ -88,6 +88,22 @@ class AgentResponse(BaseModel):
     tools_used: list[str]
 
 
+class LoginRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=8, max_length=200)
+
+
+class UserRead(APIModel):
+    id: uuid.UUID
+    email: str
+    full_name: str
+    is_admin: bool
+
+
+class LoginResponse(BaseModel):
+    user: UserRead
+
+
 class Page(APIModel, Generic[T]):
     items: list[T]
     total: int = Field(ge=0)

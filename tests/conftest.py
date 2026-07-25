@@ -8,9 +8,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from loyalty_analytics.api.auth import get_current_user
 from loyalty_analytics.database import Base, get_db
 from loyalty_analytics.main import app
-from loyalty_analytics.models import Customer, Reward, Transaction
+from loyalty_analytics.models import Customer, Reward, Transaction, User
 
 engine = create_engine(
     "sqlite://",
@@ -65,6 +66,12 @@ def client(db: Session) -> Generator[TestClient, None, None]:
         yield db
 
     app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = lambda: User(
+        email="analyst@example.com",
+        full_name="Test Analyst",
+        password_hash="unused",
+        is_admin=True,
+    )
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
