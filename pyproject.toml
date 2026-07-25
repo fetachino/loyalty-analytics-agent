@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "loyalty-analytics-agent"
-version = "0.1.0"
-description = "Production backend for customer loyalty analytics"
+version = "1.0.0"
+description = "Production loyalty analytics platform with a constrained AI analyst"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
