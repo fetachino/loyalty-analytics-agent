@@ -205,6 +205,9 @@ tempCodeRunnerFile.py
 
 # Ruff stuff:
 .ruff_cache/
+.coverage
+coverage.xml
+.python-version
 
 # PyPI configuration file
 .pypirc
