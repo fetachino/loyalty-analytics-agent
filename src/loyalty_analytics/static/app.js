@@ -283,11 +283,22 @@ document.querySelector("#agent-form").addEventListener("submit", async (event) =
   const pending = addMessage("Reviewing program data…", "assistant");
 
   try {
-    const response = await fetchJson(endpoints.agent, {
+    let response = await fetchJson(endpoints.agent, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
     });
+    if (response.status === "approval_required") {
+      const approved = window.confirm(response.approval_request);
+      response = await fetchJson(
+        `/api/v1/agent/workflows/${encodeURIComponent(response.workflow_id)}/approval`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approved }),
+        },
+      );
+    }
     pending.querySelector("p").textContent = response.answer;
     await loadAgentHistory();
   } catch (agentError) {

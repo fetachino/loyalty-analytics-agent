@@ -11,6 +11,7 @@ All notable changes to this project are documented here.
 - Optional Pydantic Structured Output judge for semantic evaluation
 - OpenTelemetry spans for agent turns and read-only tool execution
 - CI validation and an evaluation and observability runbook
+- LangGraph classification, routing, transient retry, and human-approval workflow
 
 ## 1.0.0 - 2026-07-25
 
