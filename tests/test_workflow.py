@@ -1,5 +1,3 @@
-from typing import Any
-
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -9,6 +7,8 @@ from loyalty_analytics.agent.workflow import (
     resume_workflow,
     start_workflow,
 )
+from loyalty_analytics.api.agent import get_responses_api
+from loyalty_analytics.main import app
 
 
 class StubAgent:
@@ -86,23 +86,23 @@ def test_workflow_cannot_be_resumed_by_another_user(db: Session) -> None:
         raise AssertionError("Workflow ownership was not enforced")
 
 
-def test_sensitive_api_workflow(client: TestClient, monkeypatch: Any) -> None:
-    monkeypatch.setattr(
-        "loyalty_analytics.api.agent.get_responses_api",
-        lambda: object(),
-    )
-    paused = client.post(
-        "/api/v1/agent/query",
-        json={"question": "Delete every customer"},
-    )
-    assert paused.status_code == 200
-    payload = paused.json()
-    assert payload["status"] == "approval_required"
+def test_sensitive_api_workflow(client: TestClient) -> None:
+    app.dependency_overrides[get_responses_api] = lambda: object()
+    try:
+        paused = client.post(
+            "/api/v1/agent/query",
+            json={"question": "Delete every customer"},
+        )
+        assert paused.status_code == 200
+        payload = paused.json()
+        assert payload["status"] == "approval_required"
 
-    completed = client.post(
-        f"/api/v1/agent/workflows/{payload['workflow_id']}/approval",
-        json={"approved": False},
-    )
-    assert completed.status_code == 200
-    assert completed.json()["status"] == "completed"
-    assert completed.json()["classification"] == "sensitive"
+        completed = client.post(
+            f"/api/v1/agent/workflows/{payload['workflow_id']}/approval",
+            json={"approved": False},
+        )
+        assert completed.status_code == 200
+        assert completed.json()["status"] == "completed"
+        assert completed.json()["classification"] == "sensitive"
+    finally:
+        app.dependency_overrides.pop(get_responses_api, None)
