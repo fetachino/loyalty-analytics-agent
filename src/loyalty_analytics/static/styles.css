@@ -122,6 +122,30 @@ body {
   font-weight: 700;
 }
 
+.export-control {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid #d7e1dd;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.export-control select {
+  max-width: 145px;
+  padding: 9px 8px;
+  border: 0;
+  color: #435c54;
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.export-control .secondary-button {
+  border: 0;
+  border-left: 1px solid #d7e1dd;
+  border-radius: 0;
+}
+
 .history-heading {
   display: flex;
   align-items: baseline;
@@ -887,6 +911,10 @@ td:first-child {
   }
 
   .api-status {
+    display: none;
+  }
+
+  .export-control select {
     display: none;
   }
 
