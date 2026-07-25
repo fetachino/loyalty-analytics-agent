@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: loyalty-analytics-agent
+    runtime: docker
+    plan: free
+    region: ohio
+    autoDeployTrigger: checksPass
+    healthCheckPath: /health/ready
+    initialDeployHook: python scripts/bootstrap_admin.py
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: RUN_MIGRATIONS
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: loyalty-analytics-db
+          property: connectionString
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: AUTH_TOKEN_EXPIRE_MINUTES
+        value: "480"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.6-sol
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_FULL_NAME
+        value: Loyalty Administrator
+
+databases:
+  - name: loyalty-analytics-db
+    plan: free
+    region: ohio
+    postgresMajorVersion: "17"
+    databaseName: loyalty
+    user: loyalty
+    ipAllowList: []

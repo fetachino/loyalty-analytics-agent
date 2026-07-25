@@ -38,6 +38,17 @@ docker compose down
 
 Use `docker compose down -v` only when you also want to delete the local database volume.
 
+## Deployment
+
+The repository includes a `render.yaml` Blueprint for deploying the existing Docker image with a
+managed PostgreSQL database. It generates the session-signing secret, requires sensitive values to
+be entered in Render, runs migrations during startup, bootstraps the first administrator, and
+enables HTTPS-only authentication cookies.
+
+See [the deployment guide](docs/deployment.md) for the exact workflow, security requirements, and
+free-tier limitations. The included Free PostgreSQL instance expires after 30 days and is intended
+only for a portfolio demonstration.
+
 ## Local development
 
 Create a Python 3.12 virtual environment and run:
@@ -144,6 +155,9 @@ src/loyalty_analytics/static/ responsive dashboard and AI analyst interface
 migrations/             Alembic environment and versioned migrations
 scripts/seed.py         deterministic development seed data
 scripts/create_admin.py secure interactive administrator setup
+scripts/bootstrap_admin.py non-interactive first-deploy administrator setup
+docs/deployment.md      hosted deployment runbook
+render.yaml             managed service and PostgreSQL deployment Blueprint
 tests/                  API and configuration tests
 Dockerfile              non-root, multi-stage API image
 compose.yaml            API and PostgreSQL services

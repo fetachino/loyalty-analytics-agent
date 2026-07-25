@@ -1,7 +1,7 @@
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,6 +24,24 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://loyalty:loyalty@localhost:5432/loyalty",
         repr=False,
     )
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def use_psycopg_driver(cls, value: object) -> object:
+        if isinstance(value, str) and value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+psycopg://", 1)
+        return value
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> Self:
+        if self.app_env != "production":
+            return self
+        secret = self.auth_secret_key.get_secret_value() if self.auth_secret_key else ""
+        if len(secret) < 32:
+            raise ValueError("AUTH_SECRET_KEY must contain at least 32 characters in production")
+        if not self.auth_cookie_secure:
+            raise ValueError("AUTH_COOKIE_SECURE must be true in production")
+        return self
 
 
 @lru_cache
