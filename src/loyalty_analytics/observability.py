@@ -7,6 +7,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import Request, Response
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger("loyalty_analytics.http")
@@ -38,6 +43,15 @@ def configure_logging(level: str) -> None:
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
     root_logger.setLevel(level.upper())
+
+
+def configure_tracing(service_name: str, endpoint: str | None) -> None:
+    """Configure OTLP tracing when an exporter endpoint is supplied."""
+    if not endpoint or isinstance(trace.get_tracer_provider(), TracerProvider):
+        return
+    provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
+    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+    trace.set_tracer_provider(provider)
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):

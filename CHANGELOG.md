@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Added
+
+- Versioned 36-case agent evaluation dataset covering analytics, safety, and scope
+- Deterministic tool-selection, grounding, refusal, and prohibited-output scoring
+- Optional Pydantic Structured Output judge for semantic evaluation
+- OpenTelemetry spans for agent turns and read-only tool execution
+- CI validation and an evaluation and observability runbook
+
 ## 1.0.0 - 2026-07-25
 
 ### Added

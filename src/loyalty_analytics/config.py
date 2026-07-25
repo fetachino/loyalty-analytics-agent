@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     auth_cookie_secure: bool = False
     openai_api_key: SecretStr | None = Field(default=None, repr=False)
     openai_model: str = "gpt-5.6-sol"
+    evaluation_judge_model: str = "gpt-5.6-sol"
+    otel_exporter_otlp_endpoint: str | None = None
+    otel_service_name: str = "loyalty-analytics-agent"
     database_url: str = Field(
         default="postgresql+psycopg://loyalty:loyalty@localhost:5432/loyalty",
         repr=False,

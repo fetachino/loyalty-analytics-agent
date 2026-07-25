@@ -1,4 +1,4 @@
-.PHONY: install run migrate migration seed format lint typecheck test check up down
+.PHONY: install run migrate migration seed eval-validate format lint typecheck test check up down
 
 install:
 	python -m pip install -e ".[dev]"
@@ -14,6 +14,9 @@ migration:
 
 seed:
 	python scripts/seed.py
+
+eval-validate:
+	python scripts/run_evals.py --validate
 
 format:
 	ruff format .

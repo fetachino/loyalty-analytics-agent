@@ -15,7 +15,11 @@ from loyalty_analytics.api.dependencies import DatabaseSession
 from loyalty_analytics.api.exports import router as exports_router
 from loyalty_analytics.api.router import router
 from loyalty_analytics.config import get_settings
-from loyalty_analytics.observability import RequestContextMiddleware, configure_logging
+from loyalty_analytics.observability import (
+    RequestContextMiddleware,
+    configure_logging,
+    configure_tracing,
+)
 from loyalty_analytics.schemas import HealthResponse, ReadinessResponse
 
 
@@ -23,6 +27,7 @@ from loyalty_analytics.schemas import HealthResponse, ReadinessResponse
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     configure_logging(settings.log_level)
+    configure_tracing(settings.otel_service_name, settings.otel_exporter_otlp_endpoint)
     logging.getLogger(__name__).info("application_started")
     yield
 
@@ -31,7 +36,7 @@ settings = get_settings()
 static_directory = Path(__file__).parent / "static"
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version="1.0.0",
     description="REST API for customer loyalty, transaction, and reward data.",
     lifespan=lifespan,
 )

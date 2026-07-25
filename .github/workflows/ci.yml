@@ -43,6 +43,9 @@ jobs:
       - name: Type check
         run: mypy
 
+      - name: Validate agent evaluation dataset
+        run: python scripts/run_evals.py --validate
+
       - name: Test
         run: pytest
 
