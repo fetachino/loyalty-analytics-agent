@@ -1,7 +1,8 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, Protocol, TypedDict, cast
 
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, Interrupt, RetryPolicy, interrupt
 from openai import APIConnectionError, APITimeoutError, RateLimitError
@@ -45,6 +46,7 @@ REFUSAL = (
 class WorkflowState(TypedDict, total=False):
     question: str
     owner_id: str
+    created_at: str
     classification: Classification
     approved: bool
     answer: str
@@ -60,9 +62,6 @@ class WorkflowResult(BaseModel):
     response_id: str | None = None
     tools_used: list[str] = Field(default_factory=list)
     approval_request: str | None = None
-
-
-CHECKPOINTER = InMemorySaver()
 
 
 class AnalyticsAgent(Protocol):
@@ -82,7 +81,11 @@ def _route(state: WorkflowState) -> Classification:
     return state["classification"]
 
 
-def build_workflow(agent: AnalyticsAgent, db: Session) -> Any:
+def build_workflow(
+    agent: AnalyticsAgent,
+    db: Session,
+    checkpointer: BaseCheckpointSaver[Any],
+) -> Any:
     def classify_node(state: WorkflowState) -> WorkflowState:
         return {"classification": classify_question(state["question"])}
 
@@ -152,7 +155,7 @@ def build_workflow(agent: AnalyticsAgent, db: Session) -> Any:
     builder.add_edge("analyze", END)
     builder.add_edge("approval", END)
     builder.add_edge("refuse", END)
-    return builder.compile(checkpointer=CHECKPOINTER)
+    return builder.compile(checkpointer=checkpointer)
 
 
 def start_workflow(
@@ -160,13 +163,18 @@ def start_workflow(
     db: Session,
     question: str,
     owner_id: str,
+    checkpointer: BaseCheckpointSaver[Any],
 ) -> WorkflowResult:
     thread_id = str(uuid.uuid4())
-    graph = build_workflow(agent, db)
+    graph = build_workflow(agent, db, checkpointer)
     state = cast(
         dict[str, object],
         graph.invoke(
-            {"question": question, "owner_id": owner_id},
+            {
+                "question": question,
+                "owner_id": owner_id,
+                "created_at": datetime.now(UTC).isoformat(),
+            },
             config={"configurable": {"thread_id": thread_id}},
         ),
     )
@@ -179,14 +187,20 @@ def resume_workflow(
     workflow_id: str,
     approved: bool,
     owner_id: str,
+    checkpointer: BaseCheckpointSaver[Any],
+    expire_minutes: int,
 ) -> WorkflowResult:
-    graph = build_workflow(agent, db)
+    graph = build_workflow(agent, db, checkpointer)
     config = {"configurable": {"thread_id": workflow_id}}
     snapshot = graph.get_state(config)
     if not snapshot.values:
         raise KeyError(workflow_id)
     if snapshot.values.get("owner_id") != owner_id:
         raise PermissionError(workflow_id)
+    created_at = datetime.fromisoformat(cast(str, snapshot.values["created_at"]))
+    if datetime.now(UTC) - created_at > timedelta(minutes=expire_minutes):
+        checkpointer.delete_thread(workflow_id)
+        raise TimeoutError(workflow_id)
     state = cast(
         dict[str, object],
         graph.invoke(

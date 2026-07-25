@@ -111,3 +111,15 @@ class AgentQueryHistory(Base):
     tools_used: Mapped[list[str]] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     user: Mapped[User] = relationship(back_populates="agent_queries")
+
+
+class AgentWorkflowAudit(Base):
+    __tablename__ = "agent_workflow_audit"
+    __table_args__ = (Index("ix_agent_workflow_audit_user_created", "user_id", "created_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    workflow_id: Mapped[str] = mapped_column(String(100), unique=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    classification: Mapped[str] = mapped_column(String(30))
+    approved: Mapped[bool]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

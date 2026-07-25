@@ -45,9 +45,12 @@ Every API result follows a structured schema with:
 - tools used;
 - approval message when paused.
 
-## Persistence limitation
+## Durable persistence
 
-The current checkpointer is process memory, which fits the single-process portfolio deployment.
-Paused approvals expire if the service restarts and cannot move between replicas. A horizontally
-scaled production deployment should use a PostgreSQL-backed LangGraph checkpointer, enforce an
-approval expiration, and audit every resume event.
+Production uses LangGraph's PostgreSQL checkpointer, so paused approvals survive service restarts
+and can resume on another application replica. The saver initializes its own checkpoint schema
+idempotently and strict MessagePack deserialization is enabled in deployment configuration.
+
+Each workflow is bound to its authenticated user and expires after 15 minutes by default. Approval
+and rejection decisions are written to `agent_workflow_audit`; completed checkpoint state is then
+deleted to prevent replay. Tests use an isolated in-memory saver and never depend on PostgreSQL.
