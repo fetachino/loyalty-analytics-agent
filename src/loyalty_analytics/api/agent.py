@@ -10,6 +10,7 @@ from loyalty_analytics.agent.service import (
 )
 from loyalty_analytics.api.dependencies import DatabaseSession
 from loyalty_analytics.config import get_settings
+from loyalty_analytics.rate_limit import enforce_agent_rate_limit
 from loyalty_analytics.schemas import AgentQuery, AgentResponse
 
 router = APIRouter(prefix="/api/v1/agent", tags=["AI Agent"])
@@ -38,6 +39,7 @@ def query_agent(
     query: AgentQuery,
     db: DatabaseSession,
     responses_api: ResponsesDependency,
+    _: None = Depends(enforce_agent_rate_limit),
 ) -> AgentResponse:
     settings = get_settings()
     agent = LoyaltyAnalyticsAgent(responses_api, settings.openai_model)

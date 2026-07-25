@@ -98,3 +98,7 @@ class Page(APIModel, Generic[T]):
 
 class HealthResponse(BaseModel):
     status: str
+
+
+class ReadinessResponse(HealthResponse):
+    database: str
