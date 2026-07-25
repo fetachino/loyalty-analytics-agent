@@ -5,10 +5,12 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
+from langgraph.checkpoint.memory import InMemorySaver
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from loyalty_analytics.api.agent import get_agent_checkpointer
 from loyalty_analytics.api.auth import get_current_user
 from loyalty_analytics.database import Base, get_db
 from loyalty_analytics.main import app
@@ -74,6 +76,8 @@ def client(db: Session) -> Generator[TestClient, None, None]:
         password_hash="unused",
         is_admin=True,
     )
+    test_checkpointer = InMemorySaver()
+    app.dependency_overrides[get_agent_checkpointer] = lambda: test_checkpointer
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

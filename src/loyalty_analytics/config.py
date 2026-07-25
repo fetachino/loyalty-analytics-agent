@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     agent_rate_limit_requests: int = Field(default=10, ge=1)
     agent_rate_limit_window_seconds: int = Field(default=60, ge=1)
+    agent_approval_expire_minutes: int = Field(default=15, ge=1, le=1_440)
     auth_secret_key: SecretStr | None = Field(default=None, repr=False)
     auth_token_expire_minutes: int = Field(default=480, ge=5, le=10_080)
     auth_cookie_secure: bool = False

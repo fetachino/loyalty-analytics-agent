@@ -1,9 +1,11 @@
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from openai import OpenAI, OpenAIError
 from sqlalchemy import select
 
+from loyalty_analytics.agent.checkpointing import get_workflow_checkpointer
 from loyalty_analytics.agent.service import (
     AgentExecutionError,
     LoyaltyAnalyticsAgent,
@@ -13,7 +15,7 @@ from loyalty_analytics.agent.workflow import resume_workflow, start_workflow
 from loyalty_analytics.api.auth import CurrentUser, get_current_user
 from loyalty_analytics.api.dependencies import DatabaseSession
 from loyalty_analytics.config import get_settings
-from loyalty_analytics.models import AgentQueryHistory
+from loyalty_analytics.models import AgentQueryHistory, AgentWorkflowAudit
 from loyalty_analytics.rate_limit import enforce_agent_rate_limit
 from loyalty_analytics.schemas import AgentApproval, AgentHistoryRead, AgentQuery, AgentResponse
 
@@ -38,6 +40,16 @@ def get_responses_api() -> ResponsesAPI:
 ResponsesDependency = Annotated[ResponsesAPI, Depends(get_responses_api)]
 
 
+def get_agent_checkpointer() -> BaseCheckpointSaver[Any]:
+    return cast(
+        BaseCheckpointSaver[Any],
+        get_workflow_checkpointer(get_settings().database_url),
+    )
+
+
+CheckpointerDependency = Annotated[BaseCheckpointSaver[Any], Depends(get_agent_checkpointer)]
+
+
 @router.post(
     "/query",
     response_model=AgentResponse,
@@ -47,13 +59,20 @@ def query_agent(
     query: AgentQuery,
     db: DatabaseSession,
     responses_api: ResponsesDependency,
+    checkpointer: CheckpointerDependency,
     user: CurrentUser,
     _: None = Depends(enforce_agent_rate_limit),
 ) -> AgentResponse:
     settings = get_settings()
     agent = LoyaltyAnalyticsAgent(responses_api, settings.openai_model)
     try:
-        result = start_workflow(agent, db, query.question, str(user.id))
+        result = start_workflow(
+            agent,
+            db,
+            query.question,
+            str(user.id),
+            checkpointer,
+        )
     except AgentExecutionError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -92,17 +111,27 @@ def approve_agent_workflow(
     approval: AgentApproval,
     db: DatabaseSession,
     responses_api: ResponsesDependency,
+    checkpointer: CheckpointerDependency,
     user: CurrentUser,
 ) -> AgentResponse:
     settings = get_settings()
     agent = LoyaltyAnalyticsAgent(responses_api, settings.openai_model)
     try:
-        result = resume_workflow(agent, db, workflow_id, approval.approved, str(user.id))
-    except (KeyError, PermissionError) as exc:
+        result = resume_workflow(
+            agent,
+            db,
+            workflow_id,
+            approval.approved,
+            str(user.id),
+            checkpointer,
+            settings.agent_approval_expire_minutes,
+        )
+    except (KeyError, PermissionError, TimeoutError) as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Agent workflow was not found or has expired",
         ) from exc
+    checkpointer.delete_thread(workflow_id)
     response = AgentResponse.model_validate(result, from_attributes=True)
     assert response.answer is not None
     assert response.response_id is not None
@@ -113,6 +142,14 @@ def approve_agent_workflow(
             answer=response.answer,
             response_id=response.response_id,
             tools_used=response.tools_used,
+        )
+    )
+    db.add(
+        AgentWorkflowAudit(
+            workflow_id=workflow_id,
+            user_id=user.id,
+            classification=response.classification,
+            approved=approval.approved,
         )
     )
     db.commit()
