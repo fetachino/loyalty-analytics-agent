@@ -19,10 +19,16 @@ cp .env.example .env
 docker compose up --build -d
 docker compose exec api alembic upgrade head
 docker compose exec api python scripts/seed.py
+docker compose exec api python scripts/create_admin.py --email you@example.com
 ```
 
 The dashboard is available at <http://localhost:8000>. Interactive OpenAPI documentation is at
 <http://localhost:8000/docs>, with the raw schema at <http://localhost:8000/openapi.json>.
+
+Before starting the application, generate a strong signing key and set it as `AUTH_SECRET_KEY` in
+your local `.env`. For example, `python -c "import secrets; print(secrets.token_urlsafe(48))"`
+prints a suitable value. Never commit the generated key. The administrator command prompts for a
+password without echoing it and requires at least 12 characters.
 
 Stop the services with:
 
@@ -68,10 +74,18 @@ The seed is deterministic and replaces existing loyalty data with exactly 100 cu
 | `GET` | `/api/v1/analytics/spending-by-category` | Purchase metrics by category |
 | `GET` | `/api/v1/analytics/reward-redemptions` | Redemption metrics by reward |
 | `POST` | `/api/v1/agent/query` | Ask a read-only loyalty analytics question |
+| `POST` | `/api/v1/auth/login` | Start a secure dashboard session |
+| `POST` | `/api/v1/auth/logout` | End the current session |
+| `GET` | `/api/v1/auth/me` | Get the authenticated user |
 
 Collection endpoints accept `page` (default `1`) and `page_size` (default `20`, maximum `100`).
 Responses include `items`, `total`, `page`, `page_size`, and `pages`. Invalid parameters return
 FastAPI's structured `422` response; an unknown customer returns `404`.
+
+All customer, transaction, reward, analytics, and AI routes require authentication. Successful
+login sets a signed, HttpOnly, SameSite session cookie; passwords are hashed with Argon2 and are
+never stored in plaintext. Set `AUTH_COOKIE_SECURE=true` whenever the application is served over
+HTTPS. Health probes and static dashboard assets remain public.
 
 The AI endpoint uses the OpenAI Responses API and only exposes four read-only aggregate analytics
 tools. It cannot execute arbitrary SQL, modify data, or retrieve individual customer records. Set
@@ -120,6 +134,7 @@ src/loyalty_analytics/  application, configuration, ORM models, schemas, and rou
 src/loyalty_analytics/static/ responsive dashboard and AI analyst interface
 migrations/             Alembic environment and versioned migrations
 scripts/seed.py         deterministic development seed data
+scripts/create_admin.py secure interactive administrator setup
 tests/                  API and configuration tests
 Dockerfile              non-root, multi-stage API image
 compose.yaml            API and PostgreSQL services

@@ -70,3 +70,16 @@ class Reward(Base):
     points_used: Mapped[int]
     redeemed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     customer: Mapped[Customer] = relationship(back_populates="rewards")
+
+
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = (Index("ix_users_email", "email", unique=True),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(320))
+    full_name: Mapped[str] = mapped_column(String(200))
+    password_hash: Mapped[str] = mapped_column(String(512))
+    is_active: Mapped[bool] = mapped_column(default=True)
+    is_admin: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
