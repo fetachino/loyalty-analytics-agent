@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -83,9 +83,17 @@ class AgentQuery(BaseModel):
 
 
 class AgentResponse(BaseModel):
-    answer: str
-    response_id: str
+    status: Literal["completed", "approval_required"] = "completed"
+    workflow_id: str
+    classification: Literal["analytics", "sensitive", "out_of_scope"]
+    answer: str | None = None
+    response_id: str | None = None
     tools_used: list[str]
+    approval_request: str | None = None
+
+
+class AgentApproval(BaseModel):
+    approved: bool
 
 
 class AgentHistoryRead(APIModel):

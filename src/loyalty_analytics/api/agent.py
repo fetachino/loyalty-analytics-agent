@@ -9,12 +9,13 @@ from loyalty_analytics.agent.service import (
     LoyaltyAnalyticsAgent,
     ResponsesAPI,
 )
+from loyalty_analytics.agent.workflow import resume_workflow, start_workflow
 from loyalty_analytics.api.auth import CurrentUser, get_current_user
 from loyalty_analytics.api.dependencies import DatabaseSession
 from loyalty_analytics.config import get_settings
 from loyalty_analytics.models import AgentQueryHistory
 from loyalty_analytics.rate_limit import enforce_agent_rate_limit
-from loyalty_analytics.schemas import AgentHistoryRead, AgentQuery, AgentResponse
+from loyalty_analytics.schemas import AgentApproval, AgentHistoryRead, AgentQuery, AgentResponse
 
 router = APIRouter(
     prefix="/api/v1/agent",
@@ -52,7 +53,7 @@ def query_agent(
     settings = get_settings()
     agent = LoyaltyAnalyticsAgent(responses_api, settings.openai_model)
     try:
-        result = agent.answer(query.question, db)
+        result = start_workflow(agent, db, query.question, str(user.id))
     except AgentExecutionError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -63,15 +64,52 @@ def query_agent(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI provider request failed",
         ) from exc
-    response = AgentResponse(
-        answer=result.answer,
-        response_id=result.response_id,
-        tools_used=result.tools_used,
-    )
+    response = AgentResponse.model_validate(result, from_attributes=True)
+    if response.status == "approval_required":
+        return response
+    assert response.answer is not None
+    assert response.response_id is not None
     db.add(
         AgentQueryHistory(
             user_id=user.id,
             question=query.question,
+            answer=response.answer,
+            response_id=response.response_id,
+            tools_used=response.tools_used,
+        )
+    )
+    db.commit()
+    return response
+
+
+@router.post(
+    "/workflows/{workflow_id}/approval",
+    response_model=AgentResponse,
+    summary="Approve or reject a paused sensitive request",
+)
+def approve_agent_workflow(
+    workflow_id: str,
+    approval: AgentApproval,
+    db: DatabaseSession,
+    responses_api: ResponsesDependency,
+    user: CurrentUser,
+) -> AgentResponse:
+    settings = get_settings()
+    agent = LoyaltyAnalyticsAgent(responses_api, settings.openai_model)
+    try:
+        result = resume_workflow(agent, db, workflow_id, approval.approved, str(user.id))
+    except (KeyError, PermissionError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Agent workflow was not found or has expired",
+        ) from exc
+    response = AgentResponse.model_validate(result, from_attributes=True)
+    assert response.answer is not None
+    assert response.response_id is not None
+    db.add(
+        AgentQueryHistory(
+            user_id=user.id,
+            question="[Sensitive request reviewed]",
             answer=response.answer,
             response_id=response.response_id,
             tools_used=response.tools_used,

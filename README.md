@@ -23,6 +23,7 @@ data into an authenticated executive dashboard and grounded AI-assisted analysis
 - Responsive executive analytics for revenue, loyalty tiers, and reward activity
 - Paginated REST resources and streamed CSV exports with spreadsheet-injection protection
 - A constrained AI analyst that can call only approved, read-only aggregate tools
+- A LangGraph workflow with deterministic routing, transient retries, and human approval
 - Per-user analysis history, configurable rate limiting, and graceful provider error handling
 - Production deployment through a Render Blueprint with health probes and structured logs
 - Automated formatting, linting, strict typing, tests, coverage enforcement, and container builds
@@ -119,6 +120,7 @@ existing loyalty records and is intended only for development or demonstration e
 | `GET` | `/api/v1/analytics/spending-by-category` | Revenue metrics by category |
 | `GET` | `/api/v1/analytics/reward-redemptions` | Redemption metrics by reward |
 | `POST` | `/api/v1/agent/query` | Ask a grounded analytics question |
+| `POST` | `/api/v1/agent/workflows/{id}/approval` | Resume a sensitive workflow |
 | `GET` | `/api/v1/agent/history` | Retrieve the signed-in user's analyses |
 | `GET` | `/api/v1/exports/*.csv` | Stream summary or resource reports |
 | `POST` | `/api/v1/auth/login`, `/api/v1/auth/logout` | Manage a dashboard session |
@@ -146,6 +148,8 @@ See [SECURITY.md](SECURITY.md) for reporting and credential-handling guidance.
 
 The agent's golden dataset, deterministic regression scoring, optional structured LLM judge, and
 privacy-conscious tracing design are documented in [the evaluation guide](docs/evaluations.md).
+The routing graph and human-in-the-loop safety boundary are documented in
+[the workflow guide](docs/workflow.md).
 
 ## Quality gates
 
