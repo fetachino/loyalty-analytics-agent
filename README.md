@@ -65,10 +65,22 @@ The seed is deterministic and replaces existing loyalty data with exactly 100 cu
 | `GET` | `/api/v1/analytics/loyalty-tiers` | Customer and point totals by tier |
 | `GET` | `/api/v1/analytics/spending-by-category` | Purchase metrics by category |
 | `GET` | `/api/v1/analytics/reward-redemptions` | Redemption metrics by reward |
+| `POST` | `/api/v1/agent/query` | Ask a read-only loyalty analytics question |
 
 Collection endpoints accept `page` (default `1`) and `page_size` (default `20`, maximum `100`).
 Responses include `items`, `total`, `page`, `page_size`, and `pages`. Invalid parameters return
 FastAPI's structured `422` response; an unknown customer returns `404`.
+
+The AI endpoint uses the OpenAI Responses API and only exposes four read-only aggregate analytics
+tools. It cannot execute arbitrary SQL, modify data, or retrieve individual customer records. Set
+`OPENAI_API_KEY` in your local `.env` to enable it; never commit the key. The model defaults to
+`gpt-5.6-sol` and can be overridden with `OPENAI_MODEL`.
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/agent/query" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Which spending categories generate the most revenue?"}'
+```
 
 Example:
 
