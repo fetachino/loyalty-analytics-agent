@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     app_name: str = "Loyalty Analytics API"
     app_env: Literal["development", "test", "production"] = "development"
     log_level: str = "INFO"
+    agent_rate_limit_requests: int = Field(default=10, ge=1)
+    agent_rate_limit_window_seconds: int = Field(default=60, ge=1)
     openai_api_key: SecretStr | None = Field(default=None, repr=False)
     openai_model: str = "gpt-5.6-sol"
     database_url: str = Field(

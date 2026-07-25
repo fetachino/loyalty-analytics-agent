@@ -57,6 +57,8 @@ The seed is deterministic and replaces existing loyalty data with exactly 100 cu
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/health` | Service health |
+| `GET` | `/health/live` | Process liveness probe |
+| `GET` | `/health/ready` | Database readiness probe |
 | `GET` | `/api/v1/customers` | Paginated customers |
 | `GET` | `/api/v1/customers/{id}` | Customer by UUID |
 | `GET` | `/api/v1/transactions` | Paginated transactions |
@@ -74,7 +76,9 @@ FastAPI's structured `422` response; an unknown customer returns `404`.
 The AI endpoint uses the OpenAI Responses API and only exposes four read-only aggregate analytics
 tools. It cannot execute arbitrary SQL, modify data, or retrieve individual customer records. Set
 `OPENAI_API_KEY` in your local `.env` to enable it; never commit the key. The model defaults to
-`gpt-5.6-sol` and can be overridden with `OPENAI_MODEL`.
+`gpt-5.6-sol` and can be overridden with `OPENAI_MODEL`. AI requests are limited per client to 10
+requests per 60 seconds by default; configure `AGENT_RATE_LIMIT_REQUESTS` and
+`AGENT_RATE_LIMIT_WINDOW_SECONDS` as needed.
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/agent/query" \
@@ -104,6 +108,10 @@ request targeting `main` and every push to `main`.
 
 Tests use an isolated in-memory SQLite database; the deployed application uses PostgreSQL.
 Schema changes must be made through Alembic migrations.
+
+Every HTTP response includes an `X-Request-ID` correlation header and defensive browser security
+headers. Application request logs are emitted as structured JSON with method, path, status, and
+duration fields. The Docker API health check uses the database-aware readiness endpoint.
 
 ## Project layout
 

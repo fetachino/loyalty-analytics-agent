@@ -7,6 +7,25 @@ def test_health(client: TestClient) -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
+    assert response.headers["x-request-id"]
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
+def test_request_id_is_propagated(client: TestClient) -> None:
+    response = client.get("/health", headers={"X-Request-ID": "test-correlation-id"})
+    assert response.headers["x-request-id"] == "test-correlation-id"
+
+
+def test_liveness(client: TestClient) -> None:
+    response = client.get("/health/live")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}
+
+
+def test_readiness_checks_database(client: TestClient) -> None:
+    response = client.get("/health/ready")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready", "database": "connected"}
 
 
 def test_list_customers_returns_page(client: TestClient) -> None:
