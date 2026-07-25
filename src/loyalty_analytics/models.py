@@ -1,0 +1,72 @@
+import uuid
+from datetime import date, datetime
+from decimal import Decimal
+
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, Numeric, String, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from loyalty_analytics.database import Base
+
+
+class Customer(Base):
+    __tablename__ = "customers"
+    __table_args__ = (
+        CheckConstraint("points_balance >= 0", name="ck_customers_points_balance_nonnegative"),
+        Index("ix_customers_email", "email", unique=True),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    first_name: Mapped[str] = mapped_column(String(100))
+    last_name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(320))
+    city: Mapped[str] = mapped_column(String(100))
+    state: Mapped[str] = mapped_column(String(2))
+    loyalty_tier: Mapped[str] = mapped_column(String(20))
+    points_balance: Mapped[int] = mapped_column(default=0)
+    join_date: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    transactions: Mapped[list["Transaction"]] = relationship(
+        back_populates="customer", cascade="all, delete-orphan"
+    )
+    rewards: Mapped[list["Reward"]] = relationship(
+        back_populates="customer", cascade="all, delete-orphan"
+    )
+
+
+class Transaction(Base):
+    __tablename__ = "transactions"
+    __table_args__ = (
+        CheckConstraint("purchase_amount >= 0", name="ck_transactions_amount_nonnegative"),
+        CheckConstraint("points_earned >= 0", name="ck_transactions_points_nonnegative"),
+        Index("ix_transactions_customer_id", "customer_id"),
+        Index("ix_transactions_purchase_date", "purchase_date"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    customer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"))
+    merchant: Mapped[str] = mapped_column(String(150))
+    category: Mapped[str] = mapped_column(String(100))
+    purchase_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    points_earned: Mapped[int]
+    purchase_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    customer: Mapped[Customer] = relationship(back_populates="transactions")
+
+
+class Reward(Base):
+    __tablename__ = "rewards"
+    __table_args__ = (
+        CheckConstraint("points_used > 0", name="ck_rewards_points_positive"),
+        Index("ix_rewards_customer_id", "customer_id"),
+        Index("ix_rewards_redeemed_at", "redeemed_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    customer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"))
+    reward_name: Mapped[str] = mapped_column(String(150))
+    points_used: Mapped[int]
+    redeemed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    customer: Mapped[Customer] = relationship(back_populates="rewards")
