@@ -21,7 +21,7 @@ docker compose exec api alembic upgrade head
 docker compose exec api python scripts/seed.py
 ```
 
-The API is available at <http://localhost:8000>. Interactive OpenAPI documentation is at
+The dashboard is available at <http://localhost:8000>. Interactive OpenAPI documentation is at
 <http://localhost:8000/docs>, with the raw schema at <http://localhost:8000/openapi.json>.
 
 Stop the services with:
@@ -109,6 +109,7 @@ Schema changes must be made through Alembic migrations.
 
 ```text
 src/loyalty_analytics/  application, configuration, ORM models, schemas, and routes
+src/loyalty_analytics/static/ responsive dashboard and AI analyst interface
 migrations/             Alembic environment and versioned migrations
 scripts/seed.py         deterministic development seed data
 tests/                  API and configuration tests

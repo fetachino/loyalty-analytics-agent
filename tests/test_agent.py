@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from loyalty_analytics.agent.service import AgentExecutionError, LoyaltyAnalyticsAgent
 from loyalty_analytics.agent.tools import execute_tool
 from loyalty_analytics.api.agent import get_responses_api
+from loyalty_analytics.config import Settings
 from loyalty_analytics.main import app
 
 
@@ -75,7 +76,11 @@ def test_agent_query_validation(client: TestClient) -> None:
     app.dependency_overrides.pop(get_responses_api)
 
 
-def test_unconfigured_agent_returns_503(client: TestClient) -> None:
+def test_unconfigured_agent_returns_503(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings = Settings(_env_file=None, openai_api_key=None)
+    monkeypatch.setattr("loyalty_analytics.api.agent.get_settings", lambda: settings)
     response_value = client.post(
         "/api/v1/agent/query",
         json={"question": "Summarize the program"},

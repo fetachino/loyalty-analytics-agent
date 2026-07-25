@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Customer loyalty program analytics and AI-assisted insights."
+    />
+    <title>Loyalty Intelligence</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Loyalty Intelligence home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 36 36" role="img">
+              <path d="M18 3 31 10.5v15L18 33 5 25.5v-15L18 3Z" />
+              <path d="m12 18 4 4 8-9" />
+            </svg>
+          </span>
+          <span><strong>Loyalty</strong><small>Intelligence</small></span>
+        </a>
+
+        <nav aria-label="Primary navigation">
+          <a class="nav-item active" href="#overview">
+            <span aria-hidden="true">⌁</span> Overview
+          </a>
+          <a class="nav-item" href="#segments">
+            <span aria-hidden="true">◫</span> Segments
+          </a>
+          <a class="nav-item" href="#rewards">
+            <span aria-hidden="true">◇</span> Rewards
+          </a>
+          <a class="nav-item" href="#assistant">
+            <span aria-hidden="true">✦</span> AI Analyst
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="environment">DEV</span>
+          <div>
+            <strong>Portfolio environment</strong>
+            <small>Seeded sample data</small>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <button class="menu-button" type="button" aria-label="Toggle navigation">☰</button>
+          <div>
+            <p class="eyebrow">Program performance</p>
+            <h1>Executive overview</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="api-status"><i></i> API connected</span>
+            <button id="refresh-button" class="secondary-button" type="button">
+              <span aria-hidden="true">↻</span> Refresh
+            </button>
+          </div>
+        </header>
+
+        <div class="content">
+          <section id="overview" aria-labelledby="overview-heading">
+            <div class="section-heading">
+              <div>
+                <h2 id="overview-heading">Program pulse</h2>
+                <p>Live totals across customers, purchases, and rewards.</p>
+              </div>
+              <span id="last-updated" class="last-updated">Loading data…</span>
+            </div>
+
+            <div id="metric-grid" class="metric-grid" aria-live="polite">
+              <article class="metric-card skeleton"></article>
+              <article class="metric-card skeleton"></article>
+              <article class="metric-card skeleton"></article>
+              <article class="metric-card skeleton"></article>
+            </div>
+          </section>
+
+          <section class="dashboard-grid" aria-label="Analytics detail">
+            <article class="panel spend-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Purchase behavior</p>
+                  <h2>Spend by category</h2>
+                </div>
+                <span class="panel-badge">Revenue</span>
+              </div>
+              <div id="category-chart" class="bar-chart loading-block"></div>
+            </article>
+
+            <article id="segments" class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Membership</p>
+                  <h2>Loyalty tiers</h2>
+                </div>
+                <span class="panel-badge neutral">Customers</span>
+              </div>
+              <div id="tier-summary" class="tier-summary loading-block"></div>
+            </article>
+          </section>
+
+          <section class="dashboard-grid lower-grid">
+            <article id="rewards" class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Engagement</p>
+                  <h2>Reward redemptions</h2>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Reward</th>
+                      <th>Redemptions</th>
+                      <th>Points used</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reward-table">
+                    <tr><td colspan="3" class="table-loading">Loading rewards…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article id="assistant" class="panel assistant-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow accent">AI-powered</p>
+                  <h2>Ask your loyalty analyst</h2>
+                </div>
+                <span class="sparkle" aria-hidden="true">✦</span>
+              </div>
+              <div id="conversation" class="conversation" aria-live="polite">
+                <div class="message assistant-message">
+                  <span class="message-icon" aria-hidden="true">✦</span>
+                  <p>
+                    Ask me about program KPIs, loyalty tiers, spending categories, or reward
+                    activity.
+                  </p>
+                </div>
+              </div>
+              <form id="agent-form" class="agent-form">
+                <label class="sr-only" for="agent-question">Question for the AI analyst</label>
+                <input
+                  id="agent-question"
+                  name="question"
+                  type="text"
+                  minlength="3"
+                  maxlength="2000"
+                  autocomplete="off"
+                  placeholder="Which category drives the most revenue?"
+                  required
+                />
+                <button type="submit" aria-label="Send question">→</button>
+              </form>
+              <p class="assistant-note">Read-only access to aggregate program data.</p>
+            </article>
+          </section>
+
+          <p id="global-error" class="global-error" role="alert" hidden></p>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
