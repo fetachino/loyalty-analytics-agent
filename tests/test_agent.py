@@ -57,9 +57,13 @@ def test_agent_executes_read_only_tool_and_returns_answer(client: TestClient, db
 
     assert result.status_code == 200
     assert result.json() == {
+        "status": "completed",
+        "workflow_id": result.json()["workflow_id"],
+        "classification": "analytics",
         "answer": "The program has 1 customer and $24.50 in purchases.",
         "response_id": "resp-2",
         "tools_used": ["get_program_overview"],
+        "approval_request": None,
     }
     assert fake_api.requests[0]["store"] is False
     second_input = fake_api.requests[1]["input"]
