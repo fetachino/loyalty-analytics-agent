@@ -45,3 +45,18 @@ jobs:
 
       - name: Test
         run: pytest
+
+  container:
+    name: Container build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build --tag loyalty-analytics-agent:ci .
+
+      - name: Verify Python version
+        run: docker run --rm loyalty-analytics-agent:ci python --version
