@@ -7,6 +7,7 @@ const endpoints = {
   tiers: "/api/v1/analytics/loyalty-tiers",
   rewards: "/api/v1/analytics/reward-redemptions",
   agent: "/api/v1/agent/query",
+  agentHistory: "/api/v1/agent/history",
 };
 
 const colors = ["#173f35", "#7da8d9", "#f29b63", "#9d8bc4", "#8ebc55"];
@@ -233,6 +234,42 @@ function addMessage(text, role) {
   return message;
 }
 
+async function loadAgentHistory() {
+  const container = document.querySelector("#agent-history");
+  try {
+    const history = await fetchJson(`${endpoints.agentHistory}?limit=5`);
+    container.replaceChildren();
+    if (!history.length) {
+      container.append(createElement("p", "history-empty", "Your recent analyses will appear here."));
+      return;
+    }
+    history.forEach((item) => {
+      const button = createElement("button", "history-item");
+      button.type = "button";
+      button.append(
+        createElement("span", "", item.question),
+        createElement(
+          "small",
+          "",
+          new Intl.DateTimeFormat("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          }).format(new Date(item.created_at)),
+        ),
+      );
+      button.addEventListener("click", () => {
+        document.querySelector("#agent-question").value = item.question;
+        document.querySelector("#agent-question").focus();
+      });
+      container.append(button);
+    });
+  } catch {
+    container.replaceChildren();
+  }
+}
+
 document.querySelector("#agent-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const input = document.querySelector("#agent-question");
@@ -252,6 +289,7 @@ document.querySelector("#agent-form").addEventListener("submit", async (event) =
       body: JSON.stringify({ question }),
     });
     pending.querySelector("p").textContent = response.answer;
+    await loadAgentHistory();
   } catch (agentError) {
     pending.querySelector("p").textContent =
       `I couldn't complete that analysis. ${agentError.message}`;
@@ -287,6 +325,7 @@ document.querySelector("#login-form").addEventListener("submit", async (event) =
     hideLogin(result.user);
     document.querySelector("#login-password").value = "";
     await loadDashboard();
+    await loadAgentHistory();
   } catch (error) {
     showLogin(error.message);
   } finally {

@@ -74,6 +74,7 @@ The seed is deterministic and replaces existing loyalty data with exactly 100 cu
 | `GET` | `/api/v1/analytics/spending-by-category` | Purchase metrics by category |
 | `GET` | `/api/v1/analytics/reward-redemptions` | Redemption metrics by reward |
 | `POST` | `/api/v1/agent/query` | Ask a read-only loyalty analytics question |
+| `GET` | `/api/v1/agent/history` | List the signed-in user's recent AI analyses |
 | `POST` | `/api/v1/auth/login` | Start a secure dashboard session |
 | `POST` | `/api/v1/auth/logout` | End the current session |
 | `GET` | `/api/v1/auth/me` | Get the authenticated user |
@@ -85,7 +86,8 @@ FastAPI's structured `422` response; an unknown customer returns `404`.
 All customer, transaction, reward, analytics, and AI routes require authentication. Successful
 login sets a signed, HttpOnly, SameSite session cookie; passwords are hashed with Argon2 and are
 never stored in plaintext. Set `AUTH_COOKIE_SECURE=true` whenever the application is served over
-HTTPS. Health probes and static dashboard assets remain public.
+HTTPS. AI questions and answers are retained per user so recent analyses can be revisited from the
+dashboard. Health probes and static dashboard assets remain public.
 
 The AI endpoint uses the OpenAI Responses API and only exposes four read-only aggregate analytics
 tools. It cannot execute arbitrary SQL, modify data, or retrieve individual customer records. Set

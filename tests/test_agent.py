@@ -66,6 +66,10 @@ def test_agent_executes_read_only_tool_and_returns_answer(client: TestClient, db
     tool_outputs = [item for item in second_input if isinstance(item, dict) and "call_id" in item]
     assert tool_outputs[0]["type"] == "function_call_output"
     assert tool_outputs[0]["call_id"] == "call-1"
+    history = client.get("/api/v1/agent/history")
+    assert history.status_code == 200
+    assert history.json()[0]["question"] == "Summarize the loyalty program."
+    assert history.json()[0]["tools_used"] == ["get_program_overview"]
     app.dependency_overrides.pop(get_responses_api)
 
 

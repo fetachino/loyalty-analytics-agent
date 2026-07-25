@@ -88,6 +88,15 @@ class AgentResponse(BaseModel):
     tools_used: list[str]
 
 
+class AgentHistoryRead(APIModel):
+    id: uuid.UUID
+    question: str
+    answer: str
+    response_id: str
+    tools_used: list[str]
+    created_at: datetime
+
+
 class LoginRequest(BaseModel):
     email: str = Field(min_length=3, max_length=320)
     password: str = Field(min_length=8, max_length=200)

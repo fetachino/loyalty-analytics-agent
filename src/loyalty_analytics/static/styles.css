@@ -122,6 +122,62 @@ body {
   font-weight: 700;
 }
 
+.history-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5ece9;
+  color: #27483f;
+  font-size: 0.82rem;
+}
+
+.history-heading small,
+.history-empty {
+  color: #82918c;
+  font-size: 0.72rem;
+}
+
+.agent-history {
+  display: grid;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.history-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #3a514a;
+  background: #f6f8f7;
+  font: inherit;
+  font-size: 0.76rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history-item:hover {
+  background: #eaf1ee;
+}
+
+.history-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item small {
+  flex: none;
+  color: #87948f;
+  font-size: 0.65rem;
+}
+
 button,
 input {
   font: inherit;
