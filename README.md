@@ -1,5 +1,7 @@
 # Loyalty Analytics AI Agent
 
+[![CI](https://github.com/fetachino/loyalty-analytics-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/fetachino/loyalty-analytics-agent/actions/workflows/ci.yml)
+
 Production-oriented backend foundation for a customer loyalty analytics platform. This milestone
 contains no AI, LangChain, LangGraph, or LLM functionality.
 
@@ -80,6 +82,9 @@ make test
 # or all read-only checks:
 make check
 ```
+
+The same formatting, linting, type-checking, and test gates run in GitHub Actions for every pull
+request targeting `main` and every push to `main`.
 
 Tests use an isolated in-memory SQLite database; the deployed application uses PostgreSQL.
 Schema changes must be made through Alembic migrations.
