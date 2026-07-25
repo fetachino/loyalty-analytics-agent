@@ -78,6 +78,16 @@ class RewardAnalytics(APIModel):
     average_points_used: Decimal = Field(ge=0, decimal_places=2)
 
 
+class AgentQuery(BaseModel):
+    question: str = Field(min_length=3, max_length=2_000)
+
+
+class AgentResponse(BaseModel):
+    answer: str
+    response_id: str
+    tools_used: list[str]
+
+
 class Page(APIModel, Generic[T]):
     items: list[T]
     total: int = Field(ge=0)

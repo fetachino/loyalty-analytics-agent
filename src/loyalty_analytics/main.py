@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from loyalty_analytics.api.agent import router as agent_router
 from loyalty_analytics.api.router import router
 from loyalty_analytics.config import get_settings
 from loyalty_analytics.schemas import HealthResponse
@@ -24,6 +25,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(router)
+app.include_router(agent_router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Operations"])
