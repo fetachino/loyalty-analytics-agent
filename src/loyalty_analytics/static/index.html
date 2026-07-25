@@ -83,6 +83,16 @@
           <div class="topbar-actions">
             <span class="api-status"><i></i> API connected</span>
             <span id="current-user" class="current-user"></span>
+            <div class="export-control">
+              <label class="sr-only" for="export-select">Report to export</label>
+              <select id="export-select">
+                <option value="summary">Program summary</option>
+                <option value="customers">Customers</option>
+                <option value="transactions">Transactions</option>
+                <option value="rewards">Rewards</option>
+              </select>
+              <button id="export-button" class="secondary-button" type="button">Export CSV</button>
+            </div>
             <button id="logout-button" class="secondary-button" type="button">Sign out</button>
             <button id="refresh-button" class="secondary-button" type="button">
               <span aria-hidden="true">↻</span> Refresh

@@ -339,4 +339,9 @@ document.querySelector("#logout-button").addEventListener("click", async () => {
   showLogin();
 });
 
+document.querySelector("#export-button").addEventListener("click", () => {
+  const report = document.querySelector("#export-select").value;
+  window.location.assign(`/api/v1/exports/${report}.csv`);
+});
+
 initializeSession();

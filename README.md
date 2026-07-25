@@ -75,6 +75,10 @@ The seed is deterministic and replaces existing loyalty data with exactly 100 cu
 | `GET` | `/api/v1/analytics/reward-redemptions` | Redemption metrics by reward |
 | `POST` | `/api/v1/agent/query` | Ask a read-only loyalty analytics question |
 | `GET` | `/api/v1/agent/history` | List the signed-in user's recent AI analyses |
+| `GET` | `/api/v1/exports/summary.csv` | Download program KPIs |
+| `GET` | `/api/v1/exports/customers.csv` | Download customer data |
+| `GET` | `/api/v1/exports/transactions.csv` | Download transaction data |
+| `GET` | `/api/v1/exports/rewards.csv` | Download reward data |
 | `POST` | `/api/v1/auth/login` | Start a secure dashboard session |
 | `POST` | `/api/v1/auth/logout` | End the current session |
 | `GET` | `/api/v1/auth/me` | Get the authenticated user |
@@ -88,6 +92,9 @@ login sets a signed, HttpOnly, SameSite session cookie; passwords are hashed wit
 never stored in plaintext. Set `AUTH_COOKIE_SECURE=true` whenever the application is served over
 HTTPS. AI questions and answers are retained per user so recent analyses can be revisited from the
 dashboard. Health probes and static dashboard assets remain public.
+
+Authenticated users can download streamed CSV reports from the dashboard. Text cells that begin
+with spreadsheet formula prefixes are escaped before export to reduce CSV injection risk.
 
 The AI endpoint uses the OpenAI Responses API and only exposes four read-only aggregate analytics
 tools. It cannot execute arbitrary SQL, modify data, or retrieve individual customer records. Set
