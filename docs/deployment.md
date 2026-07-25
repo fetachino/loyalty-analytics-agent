@@ -26,8 +26,9 @@ Do not reuse your GitHub, email, or OpenAI password as the administrator passwor
 8. Open the generated `onrender.com` URL and sign in with the administrator credentials.
 
 The Blueprint generates `AUTH_SECRET_KEY` inside Render. It is never stored in Git. Database
-migrations and administrator reconciliation run before each service start. This makes a password
-reset deterministic: update `ADMIN_PASSWORD` in Render and deploy the latest commit.
+migrations and administrator reconciliation run before each service start. The portfolio seed runs
+only if the customer table is empty, so restarts never replace existing data. This also makes a
+password reset deterministic: update `ADMIN_PASSWORD` in Render and deploy the latest commit.
 
 ## Production configuration
 
@@ -39,6 +40,7 @@ The deployment sets:
 - the managed database's private connection string;
 - `RUN_MIGRATIONS=true`, applying migrations before the single Free instance starts;
 - `BOOTSTRAP_ADMIN=true`, reconciling the configured administrator before startup;
+- `SEED_DEMO_DATA=true`, loading sample analytics only when the database has no customers;
 - `/health/ready` as the platform health check.
 
 Render terminates the deployment early if required production security settings are missing.
