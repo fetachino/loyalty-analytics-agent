@@ -1,2 +1,96 @@
-# loyalty-analytics-agent
-Production-style AI agent for querying and analyzing customer loyalty data using natural language.
+# Loyalty Analytics AI Agent
+
+Production-oriented backend foundation for a customer loyalty analytics platform. This milestone
+contains no AI, LangChain, LangGraph, or LLM functionality.
+
+## Stack
+
+Python 3.12, FastAPI, PostgreSQL, SQLAlchemy 2.x, Alembic, Pydantic v2, Docker Compose,
+pytest, Ruff, and mypy.
+
+## Quick start with Docker
+
+Requirements: Docker with Compose v2.
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+docker compose exec api alembic upgrade head
+docker compose exec api python scripts/seed.py
+```
+
+The API is available at <http://localhost:8000>. Interactive OpenAPI documentation is at
+<http://localhost:8000/docs>, with the raw schema at <http://localhost:8000/openapi.json>.
+
+Stop the services with:
+
+```bash
+docker compose down
+```
+
+Use `docker compose down -v` only when you also want to delete the local database volume.
+
+## Local development
+
+Create a Python 3.12 virtual environment and run:
+
+```bash
+python -m pip install -e ".[dev]"
+cp .env.example .env
+```
+
+Set `DATABASE_URL` to a reachable PostgreSQL instance, then:
+
+```bash
+alembic upgrade head
+python scripts/seed.py
+uvicorn loyalty_analytics.main:app --reload
+```
+
+The seed is deterministic and replaces existing loyalty data with exactly 100 customers,
+1,000 transactions, and 100 reward redemptions. It is intended for development environments.
+
+## API
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/health` | Service health |
+| `GET` | `/api/v1/customers` | Paginated customers |
+| `GET` | `/api/v1/customers/{id}` | Customer by UUID |
+| `GET` | `/api/v1/transactions` | Paginated transactions |
+| `GET` | `/api/v1/rewards` | Paginated reward redemptions |
+
+Collection endpoints accept `page` (default `1`) and `page_size` (default `20`, maximum `100`).
+Responses include `items`, `total`, `page`, `page_size`, and `pages`. Invalid parameters return
+FastAPI's structured `422` response; an unknown customer returns `404`.
+
+Example:
+
+```bash
+curl "http://localhost:8000/api/v1/customers?page=1&page_size=20"
+```
+
+## Quality gates
+
+```bash
+make format
+make lint
+make typecheck
+make test
+# or all read-only checks:
+make check
+```
+
+Tests use an isolated in-memory SQLite database; the deployed application uses PostgreSQL.
+Schema changes must be made through Alembic migrations.
+
+## Project layout
+
+```text
+src/loyalty_analytics/  application, configuration, ORM models, schemas, and routes
+migrations/             Alembic environment and versioned migrations
+scripts/seed.py         deterministic development seed data
+tests/                  API and configuration tests
+Dockerfile              non-root, multi-stage API image
+compose.yaml            API and PostgreSQL services
+```
