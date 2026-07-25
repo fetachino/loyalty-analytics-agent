@@ -61,6 +61,10 @@ The seed is deterministic and replaces existing loyalty data with exactly 100 cu
 | `GET` | `/api/v1/customers/{id}` | Customer by UUID |
 | `GET` | `/api/v1/transactions` | Paginated transactions |
 | `GET` | `/api/v1/rewards` | Paginated reward redemptions |
+| `GET` | `/api/v1/analytics/overview` | Program-wide KPIs |
+| `GET` | `/api/v1/analytics/loyalty-tiers` | Customer and point totals by tier |
+| `GET` | `/api/v1/analytics/spending-by-category` | Purchase metrics by category |
+| `GET` | `/api/v1/analytics/reward-redemptions` | Redemption metrics by reward |
 
 Collection endpoints accept `page` (default `1`) and `page_size` (default `20`, maximum `100`).
 Responses include `items`, `total`, `page`, `page_size`, and `pages`. Invalid parameters return

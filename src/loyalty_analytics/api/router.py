@@ -8,7 +8,22 @@ from sqlalchemy.orm import Session
 
 from loyalty_analytics.api.dependencies import DatabaseSession, PageNumber, PageSize
 from loyalty_analytics.models import Customer, Reward, Transaction
-from loyalty_analytics.schemas import CustomerRead, Page, RewardRead, TransactionRead
+from loyalty_analytics.schemas import (
+    AnalyticsOverview,
+    CategoryAnalytics,
+    CustomerRead,
+    LoyaltyTierAnalytics,
+    Page,
+    RewardAnalytics,
+    RewardRead,
+    TransactionRead,
+)
+from loyalty_analytics.services.analytics import (
+    get_loyalty_tiers,
+    get_overview,
+    get_reward_redemptions,
+    get_spending_categories,
+)
 
 router = APIRouter(prefix="/api/v1")
 ModelT = TypeVar("ModelT")
@@ -57,3 +72,43 @@ def list_rewards(
     db: DatabaseSession, page: PageNumber = 1, page_size: PageSize = 20
 ) -> Page[RewardRead]:
     return cast(Page[RewardRead], _paginate(db, Reward, page, page_size))
+
+
+@router.get(
+    "/analytics/overview",
+    response_model=AnalyticsOverview,
+    tags=["Analytics"],
+    summary="Get loyalty program KPIs",
+)
+def analytics_overview(db: DatabaseSession) -> AnalyticsOverview:
+    return get_overview(db)
+
+
+@router.get(
+    "/analytics/loyalty-tiers",
+    response_model=list[LoyaltyTierAnalytics],
+    tags=["Analytics"],
+    summary="Summarize customers by loyalty tier",
+)
+def analytics_loyalty_tiers(db: DatabaseSession) -> list[LoyaltyTierAnalytics]:
+    return get_loyalty_tiers(db)
+
+
+@router.get(
+    "/analytics/spending-by-category",
+    response_model=list[CategoryAnalytics],
+    tags=["Analytics"],
+    summary="Summarize spending by transaction category",
+)
+def analytics_spending_categories(db: DatabaseSession) -> list[CategoryAnalytics]:
+    return get_spending_categories(db)
+
+
+@router.get(
+    "/analytics/reward-redemptions",
+    response_model=list[RewardAnalytics],
+    tags=["Analytics"],
+    summary="Summarize reward redemption activity",
+)
+def analytics_reward_redemptions(db: DatabaseSession) -> list[RewardAnalytics]:
+    return get_reward_redemptions(db)
