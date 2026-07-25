@@ -23,7 +23,7 @@ data into an authenticated executive dashboard and grounded AI-assisted analysis
 - Responsive executive analytics for revenue, loyalty tiers, and reward activity
 - Paginated REST resources and streamed CSV exports with spreadsheet-injection protection
 - A constrained AI analyst that can call only approved, read-only aggregate tools
-- A LangGraph workflow with deterministic routing, transient retries, and human approval
+- A durable LangGraph workflow with routing, retries, PostgreSQL checkpoints, and audited approval
 - Per-user analysis history, configurable rate limiting, and graceful provider error handling
 - Production deployment through a Render Blueprint with health probes and structured logs
 - Automated formatting, linting, strict typing, tests, coverage enforcement, and container builds
