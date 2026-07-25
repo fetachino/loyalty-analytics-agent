@@ -1,18 +1,20 @@
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from openai import OpenAI, OpenAIError
+from sqlalchemy import select
 
 from loyalty_analytics.agent.service import (
     AgentExecutionError,
     LoyaltyAnalyticsAgent,
     ResponsesAPI,
 )
-from loyalty_analytics.api.auth import get_current_user
+from loyalty_analytics.api.auth import CurrentUser, get_current_user
 from loyalty_analytics.api.dependencies import DatabaseSession
 from loyalty_analytics.config import get_settings
+from loyalty_analytics.models import AgentQueryHistory
 from loyalty_analytics.rate_limit import enforce_agent_rate_limit
-from loyalty_analytics.schemas import AgentQuery, AgentResponse
+from loyalty_analytics.schemas import AgentHistoryRead, AgentQuery, AgentResponse
 
 router = APIRouter(
     prefix="/api/v1/agent",
@@ -44,6 +46,7 @@ def query_agent(
     query: AgentQuery,
     db: DatabaseSession,
     responses_api: ResponsesDependency,
+    user: CurrentUser,
     _: None = Depends(enforce_agent_rate_limit),
 ) -> AgentResponse:
     settings = get_settings()
@@ -60,8 +63,34 @@ def query_agent(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI provider request failed",
         ) from exc
-    return AgentResponse(
+    response = AgentResponse(
         answer=result.answer,
         response_id=result.response_id,
         tools_used=result.tools_used,
     )
+    db.add(
+        AgentQueryHistory(
+            user_id=user.id,
+            question=query.question,
+            answer=response.answer,
+            response_id=response.response_id,
+            tools_used=response.tools_used,
+        )
+    )
+    db.commit()
+    return response
+
+
+@router.get("/history", response_model=list[AgentHistoryRead])
+def query_history(
+    db: DatabaseSession,
+    user: CurrentUser,
+    limit: int = Query(default=10, ge=1, le=50),
+) -> list[AgentQueryHistory]:
+    statement = (
+        select(AgentQueryHistory)
+        .where(AgentQueryHistory.user_id == user.id)
+        .order_by(AgentQueryHistory.created_at.desc())
+        .limit(limit)
+    )
+    return list(db.scalars(statement))

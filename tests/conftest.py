@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Generator
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -67,6 +68,7 @@ def client(db: Session) -> Generator[TestClient, None, None]:
 
     app.dependency_overrides[get_db] = override_db
     app.dependency_overrides[get_current_user] = lambda: User(
+        id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
         email="analyst@example.com",
         full_name="Test Analyst",
         password_hash="unused",
