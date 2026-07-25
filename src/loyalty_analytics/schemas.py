@@ -44,6 +44,40 @@ class RewardRead(APIModel):
     redeemed_at: datetime
 
 
+class AnalyticsOverview(APIModel):
+    total_customers: int = Field(ge=0)
+    active_customers: int = Field(ge=0)
+    total_transactions: int = Field(ge=0)
+    total_purchase_amount: Decimal = Field(ge=0, decimal_places=2)
+    average_purchase_amount: Decimal = Field(ge=0, decimal_places=2)
+    total_points_balance: int = Field(ge=0)
+    total_points_earned: int = Field(ge=0)
+    total_rewards_redeemed: int = Field(ge=0)
+    total_points_redeemed: int = Field(ge=0)
+
+
+class LoyaltyTierAnalytics(APIModel):
+    loyalty_tier: str
+    customer_count: int = Field(ge=0)
+    total_points_balance: int = Field(ge=0)
+    average_points_balance: Decimal = Field(ge=0, decimal_places=2)
+
+
+class CategoryAnalytics(APIModel):
+    category: str
+    transaction_count: int = Field(ge=0)
+    total_purchase_amount: Decimal = Field(ge=0, decimal_places=2)
+    average_purchase_amount: Decimal = Field(ge=0, decimal_places=2)
+    total_points_earned: int = Field(ge=0)
+
+
+class RewardAnalytics(APIModel):
+    reward_name: str
+    redemption_count: int = Field(ge=0)
+    total_points_used: int = Field(ge=0)
+    average_points_used: Decimal = Field(ge=0, decimal_places=2)
+
+
 class Page(APIModel, Generic[T]):
     items: list[T]
     total: int = Field(ge=0)
