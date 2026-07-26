@@ -4,14 +4,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from loyalty_analytics.services.analytics import (
-    get_loyalty_tiers,
-    get_overview,
-    get_reward_redemptions,
-    get_spending_categories,
-)
+from loyalty_analytics.services.analytics_backend import AnalyticsBackend, get_analytics_backend
 
-ToolHandler = Callable[[Session], Any]
+ToolHandler = Callable[[AnalyticsBackend], Any]
 
 TOOL_DEFINITIONS: list[dict[str, Any]] = [
     {
@@ -67,10 +62,10 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
 ]
 
 TOOL_HANDLERS: dict[str, ToolHandler] = {
-    "get_program_overview": get_overview,
-    "get_loyalty_tier_summary": get_loyalty_tiers,
-    "get_spending_by_category": get_spending_categories,
-    "get_reward_redemption_summary": get_reward_redemptions,
+    "get_program_overview": lambda backend: backend.overview(),
+    "get_loyalty_tier_summary": lambda backend: backend.loyalty_tiers(),
+    "get_spending_by_category": lambda backend: backend.spending_categories(),
+    "get_reward_redemption_summary": lambda backend: backend.reward_redemptions(),
 }
 
 
@@ -84,7 +79,7 @@ def execute_tool(name: str, arguments: str, db: Session) -> str:
     if parsed_arguments != {}:
         raise ValueError(f"Tool {name} does not accept arguments")
 
-    result = handler(db)
+    result = handler(get_analytics_backend(db))
     if isinstance(result, list):
         payload = [item.model_dump(mode="json") for item in result]
     else:

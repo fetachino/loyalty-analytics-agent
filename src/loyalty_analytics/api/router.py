@@ -2,28 +2,29 @@ import math
 import uuid
 from typing import Any, TypeVar, cast
 
+import snowflake.connector
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from loyalty_analytics.api.auth import get_current_user
 from loyalty_analytics.api.dependencies import DatabaseSession, PageNumber, PageSize
+from loyalty_analytics.config import get_settings
 from loyalty_analytics.models import Customer, Reward, Transaction
 from loyalty_analytics.schemas import (
     AnalyticsOverview,
     CategoryAnalytics,
     CustomerRead,
+    IntegrationHealth,
     LoyaltyTierAnalytics,
     Page,
     RewardAnalytics,
     RewardRead,
     TransactionRead,
 )
-from loyalty_analytics.services.analytics import (
-    get_loyalty_tiers,
-    get_overview,
-    get_reward_redemptions,
-    get_spending_categories,
+from loyalty_analytics.services.analytics_backend import (
+    SnowflakeAnalyticsBackend,
+    get_analytics_backend,
 )
 
 router = APIRouter(prefix="/api/v1", dependencies=[Depends(get_current_user)])
@@ -82,7 +83,7 @@ def list_rewards(
     summary="Get loyalty program KPIs",
 )
 def analytics_overview(db: DatabaseSession) -> AnalyticsOverview:
-    return get_overview(db)
+    return get_analytics_backend(db).overview()
 
 
 @router.get(
@@ -92,7 +93,7 @@ def analytics_overview(db: DatabaseSession) -> AnalyticsOverview:
     summary="Summarize customers by loyalty tier",
 )
 def analytics_loyalty_tiers(db: DatabaseSession) -> list[LoyaltyTierAnalytics]:
-    return get_loyalty_tiers(db)
+    return get_analytics_backend(db).loyalty_tiers()
 
 
 @router.get(
@@ -102,7 +103,7 @@ def analytics_loyalty_tiers(db: DatabaseSession) -> list[LoyaltyTierAnalytics]:
     summary="Summarize spending by transaction category",
 )
 def analytics_spending_categories(db: DatabaseSession) -> list[CategoryAnalytics]:
-    return get_spending_categories(db)
+    return get_analytics_backend(db).spending_categories()
 
 
 @router.get(
@@ -112,4 +113,27 @@ def analytics_spending_categories(db: DatabaseSession) -> list[CategoryAnalytics
     summary="Summarize reward redemption activity",
 )
 def analytics_reward_redemptions(db: DatabaseSession) -> list[RewardAnalytics]:
-    return get_reward_redemptions(db)
+    return get_analytics_backend(db).reward_redemptions()
+
+
+@router.get(
+    "/integrations/snowflake/health",
+    response_model=IntegrationHealth,
+    tags=["Integrations"],
+    summary="Check the configured Snowflake analytics connection",
+)
+def snowflake_health() -> IntegrationHealth:
+    settings = get_settings()
+    connected = False
+    if settings.snowflake_is_configured:
+        try:
+            SnowflakeAnalyticsBackend(settings).ping()
+            connected = True
+        except snowflake.connector.Error:
+            connected = False
+    return IntegrationHealth(
+        provider=settings.analytics_provider,
+        configured=settings.snowflake_is_configured,
+        connected=connected,
+        fallback_enabled=settings.snowflake_fallback_to_postgresql,
+    )

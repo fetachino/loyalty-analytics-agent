@@ -135,3 +135,10 @@ class HealthResponse(BaseModel):
 
 class ReadinessResponse(HealthResponse):
     database: str
+
+
+class IntegrationHealth(BaseModel):
+    provider: Literal["postgresql", "snowflake"]
+    configured: bool
+    connected: bool
+    fallback_enabled: bool
