@@ -36,6 +36,24 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-5.6-sol
+      - key: ANALYTICS_PROVIDER
+        value: postgresql
+      - key: SNOWFLAKE_FALLBACK_TO_POSTGRESQL
+        value: "true"
+      - key: SNOWFLAKE_ACCOUNT
+        sync: false
+      - key: SNOWFLAKE_USER
+        sync: false
+      - key: SNOWFLAKE_PASSWORD
+        sync: false
+      - key: SNOWFLAKE_WAREHOUSE
+        value: LOYALTY_ANALYTICS_WH
+      - key: SNOWFLAKE_DATABASE
+        value: LOYALTY_ANALYTICS
+      - key: SNOWFLAKE_SCHEMA
+        value: ANALYTICS
+      - key: SNOWFLAKE_ROLE
+        value: LOYALTY_ANALYTICS_APP
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD

@@ -24,6 +24,15 @@ class Settings(BaseSettings):
     evaluation_judge_model: str = "gpt-5.6-sol"
     otel_exporter_otlp_endpoint: str | None = None
     otel_service_name: str = "loyalty-analytics-agent"
+    analytics_provider: Literal["postgresql", "snowflake"] = "postgresql"
+    snowflake_fallback_to_postgresql: bool = True
+    snowflake_account: str | None = None
+    snowflake_user: str | None = None
+    snowflake_password: SecretStr | None = Field(default=None, repr=False)
+    snowflake_warehouse: str = "LOYALTY_ANALYTICS_WH"
+    snowflake_database: str = "LOYALTY_ANALYTICS"
+    snowflake_schema: str = "ANALYTICS"
+    snowflake_role: str = "LOYALTY_ANALYTICS_APP"
     database_url: str = Field(
         default="postgresql+psycopg://loyalty:loyalty@localhost:5432/loyalty",
         repr=False,
@@ -46,6 +55,11 @@ class Settings(BaseSettings):
         if not self.auth_cookie_secure:
             raise ValueError("AUTH_COOKIE_SECURE must be true in production")
         return self
+
+    @property
+    def snowflake_is_configured(self) -> bool:
+        """Return whether the minimum Snowflake connection settings are present."""
+        return bool(self.snowflake_account and self.snowflake_user and self.snowflake_password)
 
 
 @lru_cache
