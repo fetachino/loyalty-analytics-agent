@@ -172,6 +172,18 @@ SQLite database; production uses PostgreSQL. Schema changes are applied through 
 session secret, runs migrations, bootstraps an administrator, and seeds an empty demo database.
 See [the deployment runbook](docs/deployment.md) for configuration and free-tier limitations.
 
+### Snowflake analytics
+
+The dashboard and AI tools can read aggregate metrics from Snowflake while PostgreSQL remains the
+system of record and automatic fallback. Run `infra/snowflake/bootstrap.sql` in Snowsight after
+replacing `YOUR_SNOWFLAKE_USERNAME`, configure the `SNOWFLAKE_*` secrets, run
+`python scripts/sync_snowflake.py`, and set `ANALYTICS_PROVIDER=snowflake`.
+
+The warehouse is X-Small, starts suspended, and auto-suspends after 60 seconds. The authenticated
+`GET /api/v1/integrations/snowflake/health` endpoint verifies the deployed connection. Never
+commit Snowflake credentials; for long-lived production use, migrate from a password to key-pair
+authentication.
+
 ## Project layout
 
 ```text
