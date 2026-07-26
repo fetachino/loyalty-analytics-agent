@@ -142,6 +142,7 @@ class IntegrationHealth(BaseModel):
     configured: bool
     connected: bool
     fallback_enabled: bool
+    authentication: Literal["key_pair", "password", "unconfigured"]
 
 
 class SnowflakeSyncResponse(BaseModel):

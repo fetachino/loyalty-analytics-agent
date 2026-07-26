@@ -136,4 +136,5 @@ def snowflake_health() -> IntegrationHealth:
         configured=settings.snowflake_is_configured,
         connected=connected,
         fallback_enabled=settings.snowflake_fallback_to_postgresql,
+        authentication=settings.snowflake_authentication_method,
     )
