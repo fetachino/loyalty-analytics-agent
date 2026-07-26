@@ -188,6 +188,11 @@ On a private hosted network where an interactive shell is unavailable, set
 `SNOWFLAKE_SYNC_ON_START=true` for one deployment to copy PostgreSQL data into Snowflake. Confirm
 the `Synced ... to Snowflake` log entry, then immediately restore the flag to `false`.
 
+For ongoing synchronization, `.github/workflows/snowflake-sync.yml` calls a narrowly scoped,
+token-protected Render endpoint every day at 07:17 UTC and also supports manual runs. Set the same
+random value as Render's `SNOWFLAKE_SYNC_TOKEN` and the GitHub Actions repository secret
+`RENDER_SYNC_TOKEN`. The workflow receives no database or Snowflake credentials.
+
 ## Project layout
 
 ```text

@@ -1,0 +1,31 @@
+name: Snowflake synchronization
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snowflake-synchronization
+  cancel-in-progress: false
+
+jobs:
+  synchronize:
+    name: Synchronize analytics data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Request Snowflake synchronization
+        env:
+          SYNC_TOKEN: ${{ secrets.RENDER_SYNC_TOKEN }}
+        run: |
+          test -n "$SYNC_TOKEN"
+          curl --fail-with-body --show-error --silent \
+            --retry 3 --retry-all-errors --retry-delay 15 \
+            --max-time 420 \
+            --request POST \
+            --header "Authorization: Bearer $SYNC_TOKEN" \
+            https://loyalty-analytics-agent.onrender.com/api/v1/integrations/snowflake/sync
