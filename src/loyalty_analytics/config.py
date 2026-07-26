@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     analytics_provider: Literal["postgresql", "snowflake"] = "postgresql"
     snowflake_fallback_to_postgresql: bool = True
     snowflake_sync_on_start: bool = False
+    snowflake_sync_token: SecretStr | None = Field(default=None, repr=False)
     snowflake_account: str | None = None
     snowflake_user: str | None = None
     snowflake_password: SecretStr | None = Field(default=None, repr=False)

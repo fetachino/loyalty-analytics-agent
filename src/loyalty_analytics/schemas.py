@@ -142,3 +142,10 @@ class IntegrationHealth(BaseModel):
     configured: bool
     connected: bool
     fallback_enabled: bool
+
+
+class SnowflakeSyncResponse(BaseModel):
+    status: Literal["synchronized"]
+    customers: int = Field(ge=0)
+    transactions: int = Field(ge=0)
+    rewards: int = Field(ge=0)
