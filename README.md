@@ -193,6 +193,15 @@ token-protected Render endpoint every day at 07:17 UTC and also supports manual 
 random value as Render's `SNOWFLAKE_SYNC_TOKEN` and the GitHub Actions repository secret
 `RENDER_SYNC_TOKEN`. The workflow receives no database or Snowflake credentials.
 
+### Snowflake key-pair authentication
+
+For deployed environments, generate an encrypted key pair outside the repository with
+`python scripts/generate_snowflake_keypair.py --output-directory <secure-directory>`. Register
+only the public key with the Snowflake user. Store the encrypted `.p8` private key as a Render
+secret file, then set `SNOWFLAKE_PRIVATE_KEY_FILE` and `SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`.
+Key-pair settings take precedence over `SNOWFLAKE_PASSWORD`, allowing a verified migration before
+the password is removed.
+
 ## Project layout
 
 ```text
