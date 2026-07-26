@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     otel_service_name: str = "loyalty-analytics-agent"
     analytics_provider: Literal["postgresql", "snowflake"] = "postgresql"
     snowflake_fallback_to_postgresql: bool = True
+    snowflake_sync_on_start: bool = False
     snowflake_account: str | None = None
     snowflake_user: str | None = None
     snowflake_password: SecretStr | None = Field(default=None, repr=False)

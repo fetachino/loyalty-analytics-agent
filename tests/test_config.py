@@ -10,6 +10,7 @@ def test_settings_defaults() -> None:
     assert settings.app_env == "development"
     assert settings.agent_rate_limit_requests == 10
     assert settings.agent_rate_limit_window_seconds == 60
+    assert settings.snowflake_sync_on_start is False
 
 
 def test_render_database_url_uses_psycopg_driver() -> None:

@@ -184,6 +184,10 @@ The warehouse is X-Small, starts suspended, and auto-suspends after 60 seconds. 
 commit Snowflake credentials; for long-lived production use, migrate from a password to key-pair
 authentication.
 
+On a private hosted network where an interactive shell is unavailable, set
+`SNOWFLAKE_SYNC_ON_START=true` for one deployment to copy PostgreSQL data into Snowflake. Confirm
+the `Synced ... to Snowflake` log entry, then immediately restore the flag to `false`.
+
 ## Project layout
 
 ```text

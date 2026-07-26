@@ -13,6 +13,10 @@ if [ "${SEED_DEMO_DATA:-false}" = "true" ]; then
   python -m scripts.bootstrap_demo
 fi
 
+if [ "${SNOWFLAKE_SYNC_ON_START:-false}" = "true" ]; then
+  python -m scripts.sync_snowflake
+fi
+
 exec uvicorn loyalty_analytics.main:app \
   --host 0.0.0.0 \
   --port "${PORT:-8000}" \
