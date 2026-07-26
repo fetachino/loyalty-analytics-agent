@@ -63,6 +63,7 @@ def test_snowflake_requires_credentials() -> None:
     settings = Settings(_env_file=None, analytics_provider="snowflake")
 
     assert settings.snowflake_is_configured is False
+    assert settings.snowflake_authentication_method == "unconfigured"
 
 
 def test_unconfigured_snowflake_falls_back_to_postgresql(db: Session) -> None:
@@ -71,3 +72,33 @@ def test_unconfigured_snowflake_falls_back_to_postgresql(db: Session) -> None:
     backend = get_analytics_backend(db, settings)
 
     assert isinstance(backend, PostgreSQLAnalyticsBackend)
+
+
+def test_key_pair_authentication_takes_precedence(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    connection = MagicMock()
+    captured: dict[str, object] = {}
+
+    def connect(**options: object) -> MagicMock:
+        captured.update(options)
+        return connection
+
+    monkeypatch.setattr("snowflake.connector.connect", connect)
+    settings = Settings(
+        _env_file=None,
+        analytics_provider="snowflake",
+        snowflake_account="organization-account",
+        snowflake_user="portfolio_app",
+        snowflake_password="temporary-password",
+        snowflake_private_key_file="/etc/secrets/snowflake_rsa_key.p8",
+        snowflake_private_key_passphrase="private-key-passphrase",
+    )
+
+    SnowflakeAnalyticsBackend(settings).connect()
+
+    assert settings.snowflake_authentication_method == "key_pair"
+    assert captured["authenticator"] == "SNOWFLAKE_JWT"
+    assert captured["private_key_file"] == "/etc/secrets/snowflake_rsa_key.p8"
+    assert captured["private_key_file_pwd"] == "private-key-passphrase"
+    assert "password" not in captured

@@ -76,7 +76,18 @@ class SnowflakeAnalyticsBackend:
             "network_timeout": 30,
             "session_parameters": {"QUERY_TAG": "loyalty-analytics-agent"},
         }
-        if settings.snowflake_password:
+        if settings.snowflake_private_key_file:
+            connection_options.update(
+                {
+                    "authenticator": "SNOWFLAKE_JWT",
+                    "private_key_file": settings.snowflake_private_key_file,
+                }
+            )
+            if settings.snowflake_private_key_passphrase:
+                connection_options["private_key_file_pwd"] = (
+                    settings.snowflake_private_key_passphrase.get_secret_value()
+                )
+        elif settings.snowflake_password:
             connection_options["password"] = settings.snowflake_password.get_secret_value()
         return snowflake.connector.connect(**connection_options)
 

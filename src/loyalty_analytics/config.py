@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     snowflake_account: str | None = None
     snowflake_user: str | None = None
     snowflake_password: SecretStr | None = Field(default=None, repr=False)
+    snowflake_private_key_file: str | None = None
+    snowflake_private_key_passphrase: SecretStr | None = Field(default=None, repr=False)
     snowflake_warehouse: str = "LOYALTY_ANALYTICS_WH"
     snowflake_database: str = "LOYALTY_ANALYTICS"
     snowflake_schema: str = "ANALYTICS"
@@ -61,7 +63,17 @@ class Settings(BaseSettings):
     @property
     def snowflake_is_configured(self) -> bool:
         """Return whether the minimum Snowflake connection settings are present."""
-        return bool(self.snowflake_account and self.snowflake_user and self.snowflake_password)
+        authentication = self.snowflake_private_key_file or self.snowflake_password
+        return bool(self.snowflake_account and self.snowflake_user and authentication)
+
+    @property
+    def snowflake_authentication_method(self) -> Literal["key_pair", "password", "unconfigured"]:
+        """Describe the selected Snowflake authentication mechanism without exposing secrets."""
+        if self.snowflake_private_key_file:
+            return "key_pair"
+        if self.snowflake_password:
+            return "password"
+        return "unconfigured"
 
 
 @lru_cache
