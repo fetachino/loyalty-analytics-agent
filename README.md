@@ -80,6 +80,10 @@ docker compose exec api python scripts/create_admin.py --email you@example.com
 The dashboard is at <http://localhost:8000> and interactive OpenAPI documentation is at
 <http://localhost:8000/docs>.
 
+Administrators also receive a **Manage data** workspace in the dashboard for creating and updating
+customers, recording purchases, and redeeming rewards. These forms use the protected
+data-management API and keep points changes tied to transaction or redemption records.
+
 Generate a strong signing key and set it as `AUTH_SECRET_KEY` in `.env`:
 
 ```bash

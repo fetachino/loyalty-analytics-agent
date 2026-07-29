@@ -6,9 +6,16 @@ const endpoints = {
   categories: "/api/v1/analytics/spending-by-category",
   tiers: "/api/v1/analytics/loyalty-tiers",
   rewards: "/api/v1/analytics/reward-redemptions",
+  customers: "/api/v1/customers",
+  createCustomer: "/api/v1/admin/customers",
+  createTransaction: "/api/v1/admin/transactions",
+  createReward: "/api/v1/admin/rewards",
   agent: "/api/v1/agent/query",
   agentHistory: "/api/v1/agent/history",
 };
+
+let currentUser = null;
+let customerCache = [];
 
 const colors = ["#173f35", "#7da8d9", "#f29b63", "#9d8bc4", "#8ebc55"];
 const tierColors = {
@@ -52,6 +59,9 @@ function showLogin(message = "") {
 function hideLogin(user) {
   document.querySelector("#login-screen").classList.remove("visible");
   document.querySelector("#current-user").textContent = user.full_name;
+  currentUser = user;
+  document.querySelector("#manage").hidden = !user.is_admin;
+  document.querySelector("#manage-nav").hidden = !user.is_admin;
 }
 
 async function initializeSession() {
@@ -59,6 +69,7 @@ async function initializeSession() {
     const user = await fetchJson(endpoints.me);
     hideLogin(user);
     await loadDashboard();
+    if (user.is_admin) await loadCustomers();
   } catch {
     showLogin();
   }
@@ -222,6 +233,134 @@ async function loadDashboard() {
   }
 }
 
+function localDateTimeValue(date = new Date()) {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function setFormDefaults() {
+  document.querySelector('#customer-create-form [name="join_date"]').value = new Date()
+    .toISOString()
+    .slice(0, 10);
+  document.querySelector('#transaction-create-form [name="purchase_date"]').value =
+    localDateTimeValue();
+  document.querySelector('#reward-create-form [name="redeemed_at"]').value =
+    localDateTimeValue();
+}
+
+async function loadCustomers() {
+  if (!currentUser?.is_admin) return;
+  const page = await fetchJson(`${endpoints.customers}?page=1&page_size=100`);
+  customerCache = page.items;
+  document.querySelectorAll(".customer-select").forEach((select) => {
+    const selected = select.value;
+    select.replaceChildren(new Option("Select a customer", ""));
+    customerCache.forEach((customer) => {
+      const label = `${customer.first_name} ${customer.last_name} · ${number.format(customer.points_balance)} pts`;
+      select.append(new Option(label, customer.id));
+    });
+    if (customerCache.some((customer) => customer.id === selected)) {
+      select.value = selected;
+    }
+  });
+}
+
+function formValues(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+function compactPayload(values, excluded = []) {
+  return Object.fromEntries(
+    Object.entries(values).filter(([key, value]) => !excluded.includes(key) && value !== ""),
+  );
+}
+
+async function submitManagementForm(form, url, payload, successMessage) {
+  const button = form.querySelector('button[type="submit"]');
+  const status = form.querySelector(".form-status");
+  button.disabled = true;
+  status.className = "form-status";
+  status.textContent = "Saving…";
+  try {
+    await fetchJson(url, {
+      method: form.id === "customer-update-form" ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    status.classList.add("success");
+    status.textContent = successMessage;
+    form.reset();
+    setFormDefaults();
+    await loadCustomers();
+    await loadDashboard();
+  } catch (error) {
+    status.classList.add("error");
+    status.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.querySelector("#customer-create-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  await submitManagementForm(
+    form,
+    endpoints.createCustomer,
+    formValues(form),
+    "Customer created successfully.",
+  );
+});
+
+document.querySelector("#customer-update-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const values = formValues(form);
+  const customerId = values.customer_id;
+  const payload = compactPayload(values, ["customer_id"]);
+  if (!Object.keys(payload).length) {
+    const status = form.querySelector(".form-status");
+    status.className = "form-status error";
+    status.textContent = "Enter at least one field to update.";
+    return;
+  }
+  await submitManagementForm(
+    form,
+    `${endpoints.createCustomer}/${encodeURIComponent(customerId)}`,
+    payload,
+    "Customer updated successfully.",
+  );
+});
+
+document.querySelector("#transaction-create-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const payload = formValues(form);
+  payload.purchase_amount = Number(payload.purchase_amount);
+  payload.points_earned = Number(payload.points_earned);
+  payload.purchase_date = new Date(payload.purchase_date).toISOString();
+  await submitManagementForm(
+    form,
+    endpoints.createTransaction,
+    payload,
+    "Purchase recorded and points credited.",
+  );
+});
+
+document.querySelector("#reward-create-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const payload = formValues(form);
+  payload.points_used = Number(payload.points_used);
+  payload.redeemed_at = new Date(payload.redeemed_at).toISOString();
+  await submitManagementForm(
+    form,
+    endpoints.createReward,
+    payload,
+    "Reward redeemed and points deducted.",
+  );
+});
+
 function addMessage(text, role) {
   const conversation = document.querySelector("#conversation");
   const message = createElement("div", `message ${role}-message`);
@@ -337,6 +476,7 @@ document.querySelector("#login-form").addEventListener("submit", async (event) =
     document.querySelector("#login-password").value = "";
     await loadDashboard();
     await loadAgentHistory();
+    if (result.user.is_admin) await loadCustomers();
   } catch (error) {
     showLogin(error.message);
   } finally {
@@ -346,7 +486,10 @@ document.querySelector("#login-form").addEventListener("submit", async (event) =
 
 document.querySelector("#logout-button").addEventListener("click", async () => {
   await fetch(endpoints.logout, { method: "POST" });
+  currentUser = null;
   document.querySelector("#current-user").textContent = "";
+  document.querySelector("#manage").hidden = true;
+  document.querySelector("#manage-nav").hidden = true;
   showLogin();
 });
 
@@ -355,4 +498,5 @@ document.querySelector("#export-button").addEventListener("click", () => {
   window.location.assign(`/api/v1/exports/${report}.csv`);
 });
 
+setFormDefaults();
 initializeSession();

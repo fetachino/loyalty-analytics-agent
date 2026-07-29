@@ -62,6 +62,9 @@
           <a class="nav-item" href="#assistant">
             <span aria-hidden="true">✦</span> AI Analyst
           </a>
+          <a id="manage-nav" class="nav-item" href="#manage" hidden>
+            <span aria-hidden="true">+</span> Manage data
+          </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -116,6 +119,163 @@
               <article class="metric-card skeleton"></article>
               <article class="metric-card skeleton"></article>
             </div>
+          </section>
+
+          <section id="manage" class="management-section" aria-labelledby="manage-heading" hidden>
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Administrator workspace</p>
+                <h2 id="manage-heading">Manage loyalty data</h2>
+                <p>Create customers and record activity without using raw API calls.</p>
+              </div>
+              <span class="panel-badge neutral">Admin only</span>
+            </div>
+
+            <div class="management-grid">
+              <form id="customer-create-form" class="management-card">
+                <div class="management-card-heading">
+                  <span class="form-step">01</span>
+                  <div>
+                    <h3>Create customer</h3>
+                    <p>Add a new loyalty member.</p>
+                  </div>
+                </div>
+                <div class="form-grid two-columns">
+                  <label>First name<input name="first_name" maxlength="100" required /></label>
+                  <label>Last name<input name="last_name" maxlength="100" required /></label>
+                  <label class="full-width"
+                    >Email<input name="email" type="email" maxlength="320" required
+                  /></label>
+                  <label>City<input name="city" maxlength="100" required /></label>
+                  <label
+                    >State<input
+                      name="state"
+                      minlength="2"
+                      maxlength="2"
+                      pattern="[A-Za-z]{2}"
+                      required
+                  /></label>
+                  <label
+                    >Tier<select name="loyalty_tier" required>
+                      <option>Bronze</option>
+                      <option>Silver</option>
+                      <option>Gold</option>
+                      <option>Platinum</option>
+                    </select></label
+                  >
+                  <label>Join date<input name="join_date" type="date" required /></label>
+                </div>
+                <button type="submit">Create customer</button>
+                <p class="form-status" role="status"></p>
+              </form>
+
+              <form id="customer-update-form" class="management-card">
+                <div class="management-card-heading">
+                  <span class="form-step">02</span>
+                  <div>
+                    <h3>Update customer</h3>
+                    <p>Change profile or membership information.</p>
+                  </div>
+                </div>
+                <div class="form-grid two-columns">
+                  <label class="full-width"
+                    >Customer<select name="customer_id" class="customer-select" required></select
+                  ></label>
+                  <label>First name<input name="first_name" maxlength="100" /></label>
+                  <label>Last name<input name="last_name" maxlength="100" /></label>
+                  <label class="full-width"
+                    >Email<input name="email" type="email" maxlength="320"
+                  /></label>
+                  <label>City<input name="city" maxlength="100" /></label>
+                  <label
+                    >State<input
+                      name="state"
+                      minlength="2"
+                      maxlength="2"
+                      pattern="[A-Za-z]{2}"
+                  /></label>
+                  <label
+                    >Tier<select name="loyalty_tier">
+                      <option value="">Keep current tier</option>
+                      <option>Bronze</option>
+                      <option>Silver</option>
+                      <option>Gold</option>
+                      <option>Platinum</option>
+                    </select></label
+                  >
+                  <label>Join date<input name="join_date" type="date" /></label>
+                </div>
+                <button type="submit">Update customer</button>
+                <p class="form-hint">Leave fields blank to keep their current values.</p>
+                <p class="form-status" role="status"></p>
+              </form>
+
+              <form id="transaction-create-form" class="management-card">
+                <div class="management-card-heading">
+                  <span class="form-step">03</span>
+                  <div>
+                    <h3>Record purchase</h3>
+                    <p>Add activity and credit loyalty points.</p>
+                  </div>
+                </div>
+                <div class="form-grid two-columns">
+                  <label class="full-width"
+                    >Customer<select name="customer_id" class="customer-select" required></select
+                  ></label>
+                  <label>Merchant<input name="merchant" maxlength="150" required /></label>
+                  <label>Category<input name="category" maxlength="100" required /></label>
+                  <label
+                    >Purchase amount<input
+                      name="purchase_amount"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      required
+                  /></label>
+                  <label
+                    >Points earned<input
+                      name="points_earned"
+                      type="number"
+                      min="0"
+                      step="1"
+                      required
+                  /></label>
+                  <label class="full-width"
+                    >Purchase date<input name="purchase_date" type="datetime-local" required
+                  /></label>
+                </div>
+                <button type="submit">Record purchase</button>
+                <p class="form-status" role="status"></p>
+              </form>
+
+              <form id="reward-create-form" class="management-card">
+                <div class="management-card-heading">
+                  <span class="form-step">04</span>
+                  <div>
+                    <h3>Redeem reward</h3>
+                    <p>Record a redemption and deduct points.</p>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <label
+                    >Customer<select name="customer_id" class="customer-select" required></select
+                  ></label>
+                  <label>Reward name<input name="reward_name" maxlength="150" required /></label>
+                  <label
+                    >Points used<input name="points_used" type="number" min="1" step="1" required
+                  /></label>
+                  <label
+                    >Redeemed at<input name="redeemed_at" type="datetime-local" required
+                  /></label>
+                </div>
+                <button type="submit">Redeem reward</button>
+                <p class="form-status" role="status"></p>
+              </form>
+            </div>
+            <p class="management-note">
+              Local PostgreSQL metrics refresh immediately. Deployed Snowflake metrics refresh
+              after the synchronization workflow runs.
+            </p>
           </section>
 
           <section class="dashboard-grid" aria-label="Analytics detail">
