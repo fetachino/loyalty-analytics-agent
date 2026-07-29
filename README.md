@@ -190,6 +190,8 @@ The dashboard and AI tools can read aggregate metrics from Snowflake while Postg
 system of record and automatic fallback. Run `infra/snowflake/bootstrap.sql` in Snowsight after
 replacing `YOUR_SNOWFLAKE_USERNAME`, configure the `SNOWFLAKE_*` secrets, run
 `python scripts/sync_snowflake.py`, and set `ANALYTICS_PROVIDER=snowflake`.
+The bootstrap grants the application role synchronization access to existing and future analytics
+tables so scheduled data refreshes remain operational as the schema grows.
 
 The warehouse is X-Small, starts suspended, and auto-suspends after 60 seconds. The authenticated
 `GET /api/v1/integrations/snowflake/health` endpoint verifies the deployed connection. Never
