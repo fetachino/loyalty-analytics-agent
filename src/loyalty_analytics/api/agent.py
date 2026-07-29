@@ -33,7 +33,11 @@ def get_responses_api() -> ResponsesAPI:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI agent is not configured",
         )
-    responses = OpenAI(api_key=settings.openai_api_key.get_secret_value()).responses
+    responses = OpenAI(
+        api_key=settings.openai_api_key.get_secret_value(),
+        timeout=settings.openai_timeout_seconds,
+        max_retries=0,
+    ).responses
     return cast(ResponsesAPI, responses)
 
 

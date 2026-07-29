@@ -420,12 +420,15 @@ document.querySelector("#agent-form").addEventListener("submit", async (event) =
   input.value = "";
   button.disabled = true;
   const pending = addMessage("Reviewing program data…", "assistant");
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 60000);
 
   try {
     let response = await fetchJson(endpoints.agent, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
+      signal: controller.signal,
     });
     if (response.status === "approval_required") {
       const approved = window.confirm(response.approval_request);
@@ -441,9 +444,13 @@ document.querySelector("#agent-form").addEventListener("submit", async (event) =
     pending.querySelector("p").textContent = response.answer;
     await loadAgentHistory();
   } catch (agentError) {
-    pending.querySelector("p").textContent =
-      `I couldn't complete that analysis. ${agentError.message}`;
+    const detail =
+      agentError.name === "AbortError"
+        ? "The analysis timed out. Please try again."
+        : agentError.message;
+    pending.querySelector("p").textContent = `I couldn't complete that analysis. ${detail}`;
   } finally {
+    window.clearTimeout(timeout);
     button.disabled = false;
     input.focus();
   }
