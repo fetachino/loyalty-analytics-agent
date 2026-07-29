@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     snowflake_database: str = "LOYALTY_ANALYTICS"
     snowflake_schema: str = "ANALYTICS"
     snowflake_role: str = "LOYALTY_ANALYTICS_APP"
+    object_storage_bucket: str | None = None
+    object_storage_endpoint_url: str | None = None
+    object_storage_region: str = "us-east-1"
+    object_storage_access_key_id: SecretStr | None = Field(default=None, repr=False)
+    object_storage_secret_access_key: SecretStr | None = Field(default=None, repr=False)
+    object_storage_presigned_expire_seconds: int = Field(default=900, ge=60, le=3_600)
     database_url: str = Field(
         default="postgresql+psycopg://loyalty:loyalty@localhost:5432/loyalty",
         repr=False,
@@ -74,6 +80,15 @@ class Settings(BaseSettings):
         if self.snowflake_password:
             return "password"
         return "unconfigured"
+
+    @property
+    def object_storage_is_configured(self) -> bool:
+        """Return whether S3-compatible object storage credentials are available."""
+        return bool(
+            self.object_storage_bucket
+            and self.object_storage_access_key_id
+            and self.object_storage_secret_access_key
+        )
 
 
 @lru_cache

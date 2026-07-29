@@ -14,6 +14,7 @@ from loyalty_analytics.api.auth import router as auth_router
 from loyalty_analytics.api.dependencies import DatabaseSession
 from loyalty_analytics.api.exports import router as exports_router
 from loyalty_analytics.api.integrations import router as integrations_router
+from loyalty_analytics.api.object_storage import router as object_storage_router
 from loyalty_analytics.api.router import router
 from loyalty_analytics.config import get_settings
 from loyalty_analytics.observability import (
@@ -46,6 +47,7 @@ app.include_router(agent_router)
 app.include_router(auth_router)
 app.include_router(exports_router)
 app.include_router(integrations_router)
+app.include_router(object_storage_router)
 app.add_middleware(RequestContextMiddleware)
 app.mount("/static", StaticFiles(directory=static_directory), name="static")
 
