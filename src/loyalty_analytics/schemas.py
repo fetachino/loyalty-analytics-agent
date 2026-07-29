@@ -1,9 +1,9 @@
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Generic, Literal, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 T = TypeVar("T")
 
@@ -26,6 +26,65 @@ class CustomerRead(APIModel):
     updated_at: datetime
 
 
+class CustomerCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    email: str = Field(min_length=3, max_length=320, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    city: str = Field(min_length=1, max_length=100)
+    state: str = Field(min_length=2, max_length=2, pattern=r"^[A-Za-z]{2}$")
+    loyalty_tier: Literal["Bronze", "Silver", "Gold", "Platinum"]
+    join_date: date = Field(default_factory=date.today)
+
+    @field_validator("first_name", "last_name", "city", "email")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.lower()
+
+    @field_validator("state")
+    @classmethod
+    def normalize_state(cls, value: str) -> str:
+        return value.upper()
+
+
+class CustomerUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    first_name: str | None = Field(default=None, min_length=1, max_length=100)
+    last_name: str | None = Field(default=None, min_length=1, max_length=100)
+    email: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=320,
+        pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+    )
+    city: str | None = Field(default=None, min_length=1, max_length=100)
+    state: str | None = Field(default=None, min_length=2, max_length=2, pattern=r"^[A-Za-z]{2}$")
+    loyalty_tier: Literal["Bronze", "Silver", "Gold", "Platinum"] | None = None
+    join_date: date | None = None
+
+    @field_validator("first_name", "last_name", "city", "email")
+    @classmethod
+    def strip_text(cls, value: str | None) -> str | None:
+        return value.strip() if value is not None else None
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str | None) -> str | None:
+        return value.lower() if value is not None else None
+
+    @field_validator("state")
+    @classmethod
+    def normalize_state(cls, value: str | None) -> str | None:
+        return value.upper() if value is not None else None
+
+
 class TransactionRead(APIModel):
     id: uuid.UUID
     customer_id: uuid.UUID
@@ -36,12 +95,42 @@ class TransactionRead(APIModel):
     purchase_date: datetime
 
 
+class TransactionCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    customer_id: uuid.UUID
+    merchant: str = Field(min_length=1, max_length=150)
+    category: str = Field(min_length=1, max_length=100)
+    purchase_amount: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
+    points_earned: int = Field(ge=0, le=10_000_000)
+    purchase_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @field_validator("merchant", "category")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        return value.strip()
+
+
 class RewardRead(APIModel):
     id: uuid.UUID
     customer_id: uuid.UUID
     reward_name: str
     points_used: int
     redeemed_at: datetime
+
+
+class RewardCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    customer_id: uuid.UUID
+    reward_name: str = Field(min_length=1, max_length=150)
+    points_used: int = Field(gt=0, le=10_000_000)
+    redeemed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @field_validator("reward_name")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        return value.strip()
 
 
 class AnalyticsOverview(APIModel):

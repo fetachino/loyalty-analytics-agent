@@ -115,6 +115,10 @@ existing loyalty records and is intended only for development or demonstration e
 | `GET` | `/api/v1/customers/{id}` | Customer by UUID |
 | `GET` | `/api/v1/transactions` | Paginated transactions |
 | `GET` | `/api/v1/rewards` | Paginated reward redemptions |
+| `POST` | `/api/v1/admin/customers` | Create a customer (administrator only) |
+| `PATCH` | `/api/v1/admin/customers/{id}` | Update customer profile data (administrator only) |
+| `POST` | `/api/v1/admin/transactions` | Record a purchase and credit points (administrator only) |
+| `POST` | `/api/v1/admin/rewards` | Redeem a reward and deduct points (administrator only) |
 | `GET` | `/api/v1/analytics/overview` | Program-wide KPIs |
 | `GET` | `/api/v1/analytics/loyalty-tiers` | Membership metrics by tier |
 | `GET` | `/api/v1/analytics/spending-by-category` | Revenue metrics by category |
@@ -133,6 +137,10 @@ They return `items`, `total`, `page`, `page_size`, and `pages`. Validation failu
 
 Customer, transaction, reward, analytics, export, and AI routes require authentication. Health
 probes and static login assets remain public.
+
+Data-management routes require an administrator session. Transaction and reward writes lock the
+affected customer row and update the points balance in the same database transaction. Customer
+points cannot be edited directly, which preserves the transaction and redemption audit trail.
 
 ## Security and operational choices
 
