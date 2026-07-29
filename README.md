@@ -202,6 +202,17 @@ secret file, then set `SNOWFLAKE_PRIVATE_KEY_FILE` and `SNOWFLAKE_PRIVATE_KEY_PA
 Key-pair settings take precedence over `SNOWFLAKE_PASSWORD`, allowing a verified migration before
 the password is removed.
 
+### S3-compatible analytics snapshots
+
+Authenticated administrators can write aggregate-only JSON snapshots through the AWS S3 API with
+`POST /api/v1/object-storage/snapshots`, audit them with `GET /api/v1/object-storage/snapshots`,
+and request a 15-minute download URL. Snapshots intentionally exclude customer-level PII.
+
+Local development uses MinIO at `http://localhost:9001`. The same `boto3` implementation supports
+AWS S3 or an S3-compatible provider by changing `OBJECT_STORAGE_ENDPOINT_URL`, bucket, region, and
+credentials. No AWS resource is required for local development, and no AWS account is configured
+by this repository.
+
 ## Project layout
 
 ```text
