@@ -97,6 +97,30 @@ def test_unconfigured_agent_returns_503(
     assert response_value.json() == {"detail": "AI agent is not configured"}
 
 
+def test_responses_api_uses_bounded_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, Any] = {}
+    responses_api = object()
+
+    def build_client(**kwargs: Any) -> Any:
+        captured.update(kwargs)
+        return SimpleNamespace(responses=responses_api)
+
+    settings = Settings(
+        _env_file=None,
+        openai_api_key="test-key",
+        openai_timeout_seconds=12.5,
+    )
+    monkeypatch.setattr("loyalty_analytics.api.agent.get_settings", lambda: settings)
+    monkeypatch.setattr("loyalty_analytics.api.agent.OpenAI", build_client)
+
+    assert get_responses_api() is responses_api
+    assert captured == {
+        "api_key": "test-key",
+        "timeout": 12.5,
+        "max_retries": 0,
+    }
+
+
 def test_agent_rejects_unknown_tool(db: Session) -> None:
     call = SimpleNamespace(
         type="function_call",
