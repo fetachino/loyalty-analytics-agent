@@ -150,3 +150,16 @@ class SnowflakeSyncResponse(BaseModel):
     customers: int = Field(ge=0)
     transactions: int = Field(ge=0)
     rewards: int = Field(ge=0)
+
+
+class AnalyticsSnapshotRead(APIModel):
+    id: uuid.UUID
+    object_key: str
+    size_bytes: int = Field(ge=0)
+    checksum_sha256: str
+    created_at: datetime
+
+
+class AnalyticsSnapshotDownload(BaseModel):
+    url: str
+    expires_in_seconds: int = Field(ge=60, le=3_600)

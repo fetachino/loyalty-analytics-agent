@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "alembic>=1.13,<2",
+  "boto3>=1.40,<2",
   "cryptography>=46,<50",
   "fastapi>=0.115,<1",
   "faker>=30,<40",
@@ -30,6 +31,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "boto3-stubs[s3]>=1.40,<2",
   "httpx>=0.27,<1",
   "mypy>=1.11,<2",
   "pytest>=8.3,<9",
