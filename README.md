@@ -36,6 +36,27 @@ data into an authenticated executive dashboard and grounded AI-assisted analysis
 The deterministic seed starts with **100 customers, 1,000 transactions, and 100 reward
 redemptions**. Authenticated administrator actions can change the live totals.
 
+## Product tour
+
+![Executive loyalty-program KPIs](docs/images/dashboard-overview.png)
+
+<p align="center">
+  <em>Live executive KPIs backed by the configured PostgreSQL or Snowflake analytics provider.</em>
+</p>
+
+| Program analytics | Grounded AI analyst |
+| --- | --- |
+| ![Revenue, membership, and reward analytics](docs/images/dashboard-details.png) | ![AI analyst answering a grounded revenue question](docs/images/ai-analyst.png) |
+
+The administrator workspace supports operational data entry without requiring raw API calls:
+
+![Customer administration workspace](docs/images/admin-workspace-top.png)
+
+![Purchase and reward administration workspace](docs/images/admin-workspace-bottom.png)
+
+Additional implementation and production evidence is available in the
+[portfolio case study](docs/portfolio.md).
+
 ## Architecture
 
 ```mermaid
@@ -203,6 +224,10 @@ The deployed system has been validated end to end:
 
 This path exercises authentication, validation, row locking, persistence, scheduled integration,
 warehouse permissions, and analytics rendering rather than relying only on seeded screenshots.
+
+| Automated delivery | Warehouse integration |
+| --- | --- |
+| ![Successful CI and Snowflake synchronization workflows](docs/images/github-actions.png) | ![Snowflake analytics tables](docs/images/snowflake-tables.png) |
 
 ## Deployment
 

@@ -34,6 +34,33 @@ approved aggregate tools and never receives arbitrary SQL access.
 - Aggregate-only JSON snapshots through an S3-compatible API
 - Local PostgreSQL and MinIO development through Docker Compose
 
+## Product evidence
+
+### Executive analytics
+
+![Executive loyalty-program KPIs](images/dashboard-overview.png)
+
+![Category, membership, reward, and AI analytics](images/dashboard-details.png)
+
+### Grounded natural-language analysis
+
+The AI analyst selected the approved category-spending tool and grounded its response in the
+warehouse total rather than generating an unsupported value.
+
+![AI analyst answering a revenue question with grounded data](images/ai-analyst.png)
+
+### Administrator workflows
+
+![Create and update customer workflows](images/admin-workspace-top.png)
+
+![Record purchase and redeem reward workflows](images/admin-workspace-bottom.png)
+
+### Delivery and data-platform integration
+
+| GitHub Actions quality gates | Snowflake analytics schema |
+| --- | --- |
+| ![Successful CI and synchronization workflows](images/github-actions.png) | ![Customers, rewards, and transactions tables in Snowflake](images/snowflake-tables.png) |
+
 ## System architecture
 
 ```mermaid
