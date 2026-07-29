@@ -10,6 +10,7 @@ data into an authenticated executive dashboard and grounded AI-assisted analysis
 
 **[Open the live demo](https://loyalty-analytics-agent.onrender.com)** ·
 **[Explore the API docs](https://loyalty-analytics-agent.onrender.com/docs)** ·
+**[Follow the demo guide](docs/demo.md)** ·
 **[Read the portfolio case study](docs/portfolio.md)**
 
 > The demo runs on Render's free tier. Its first request after inactivity can take about a minute
@@ -21,6 +22,7 @@ data into an authenticated executive dashboard and grounded AI-assisted analysis
 - Versioned database migrations and deterministic demo-data bootstrapping
 - Secure administrator authentication with Argon2 password hashing and signed HttpOnly cookies
 - Responsive executive analytics for revenue, loyalty tiers, and reward activity
+- Administrator workflows for customers, purchases, and reward redemptions
 - Paginated REST resources and streamed CSV exports with spreadsheet-injection protection
 - A constrained AI analyst that can call only approved, read-only aggregate tools
 - A durable LangGraph workflow with routing, retries, PostgreSQL checkpoints, and audited approval
@@ -28,25 +30,35 @@ data into an authenticated executive dashboard and grounded AI-assisted analysis
 - Production deployment through a Render Blueprint with health probes and structured logs
 - Automated formatting, linting, strict typing, tests, coverage enforcement, and container builds
 - A versioned agent evaluation suite with safety cases, structured judging, and OpenTelemetry spans
+- Snowflake analytics synchronized by GitHub Actions with PostgreSQL fallback
+- Aggregate JSON snapshots through an S3-compatible API and local MinIO
 
-The deployed demo contains **100 customers, 1,000 transactions, and 100 reward redemptions**.
+The deterministic seed starts with **100 customers, 1,000 transactions, and 100 reward
+redemptions**. Authenticated administrator actions can change the live totals.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Browser["Authenticated dashboard"] -->|HTTPS + signed session| API["FastAPI application"]
-    API --> Auth["Authentication service"]
-    API --> Analytics["Analytics and export services"]
-    API --> Agent["Constrained AI analyst"]
-    Auth --> DB[("PostgreSQL")]
-    Analytics --> DB
-    Agent --> Tools["Read-only aggregate tools"]
-    Tools --> DB
+    Browser["Authenticated dashboard"] -->|HTTPS + HttpOnly session| API["FastAPI application"]
+    API --> Auth["Authentication and RBAC"]
+    API --> Admin["Data-management service"]
+    API --> Analytics["Analytics and exports"]
+    API --> Agent["LangGraph AI analyst"]
+    API --> Snapshots["Snapshot service"]
+    Auth --> PG[("PostgreSQL system of record")]
+    Admin --> PG
+    Agent --> Tools["Approved aggregate tools"]
+    Tools --> Analytics
+    Analytics --> Provider{"Configured provider"}
+    Provider --> PG
+    Provider --> SF[("Snowflake analytics")]
     Agent --> OpenAI["OpenAI Responses API"]
-    Alembic["Alembic migrations"] --> DB
+    Snapshots --> S3["S3-compatible storage / MinIO"]
+    GHA["GitHub Actions"] -->|Token-protected sync| API
+    API -->|Batch synchronization| SF
+    Alembic["Alembic migrations"] --> PG
     Render["Render Blueprint"] --> API
-    Render --> DB
 ```
 
 The AI layer never receives arbitrary SQL access. It selects from four server-owned aggregate
@@ -58,11 +70,12 @@ are intentionally unavailable to the model.
 | Area | Technologies |
 | --- | --- |
 | API | Python 3.12, FastAPI, Pydantic v2 |
-| Data | PostgreSQL, SQLAlchemy 2.x, Alembic |
-| AI | OpenAI Responses API with constrained function tools |
+| Data | PostgreSQL, Snowflake, SQLAlchemy 2.x, Alembic |
+| AI | LangGraph, OpenAI Responses API, constrained function tools |
 | Security | Argon2, signed HttpOnly cookies, security headers, rate limiting |
 | UI | Responsive HTML, CSS, and JavaScript served by FastAPI |
-| Operations | Docker, Docker Compose, Render Blueprint, health probes |
+| Storage | S3-compatible snapshots with boto3 and local MinIO |
+| Operations | Docker Compose, GitHub Actions, Render Blueprint, health probes |
 | Quality | pytest, pytest-cov, Ruff, mypy, GitHub Actions |
 
 ## Quick start with Docker
@@ -178,6 +191,19 @@ GitHub Actions runs formatting verification, linting, strict type checking, test
 and a production container build for pull requests and pushes to `main`. Tests use an isolated
 SQLite database; production uses PostgreSQL. Schema changes are applied through Alembic.
 
+## Verified production workflow
+
+The deployed system has been validated end to end:
+
+1. An administrator created a customer through the protected dashboard.
+2. A purchase credited points in the PostgreSQL system of record.
+3. A reward redemption deducted points in the same transaction boundary.
+4. The token-protected GitHub Actions workflow synchronized the data to Snowflake.
+5. The dashboard refreshed from Snowflake and reflected the new activity and balances.
+
+This path exercises authentication, validation, row locking, persistence, scheduled integration,
+warehouse permissions, and analytics rendering rather than relying only on seeded screenshots.
+
 ## Deployment
 
 `render.yaml` provisions the Docker web service and managed PostgreSQL database, generates the
@@ -234,17 +260,18 @@ src/loyalty_analytics/         application, models, schemas, routes, and service
 src/loyalty_analytics/static/  responsive dashboard and AI analyst interface
 migrations/                    Alembic environment and versioned migrations
 scripts/                       seed, bootstrap, and administrator utilities
-tests/                         API, service, configuration, and security tests
-docs/                          deployment runbook and portfolio case study
+tests/                         API, service, configuration, integration, and security tests
+docs/                          deployment, demo, evaluation, workflow, and portfolio guides
 .github/workflows/ci.yml       continuous integration quality gates
+.github/workflows/snowflake-sync.yml  scheduled warehouse synchronization
 Dockerfile                     non-root, multi-stage production image
-compose.yaml                   local API and PostgreSQL services
+compose.yaml                   local API, PostgreSQL, and MinIO services
 render.yaml                    managed deployment Blueprint
 ```
 
 ## Project status
 
-Version 1.0 is a complete portfolio release: backend, analytics, AI analyst, dashboard,
-authentication, exports, CI, and hosted deployment are operational. Future iterations could add
-multi-tenant organizations, background ingestion pipelines, richer observability, and durable
-distributed rate limiting.
+Version 1.0 is a complete portfolio release: operational writes, PostgreSQL and Snowflake
+analytics, constrained AI workflows, S3-compatible snapshots, authentication, CI, scheduled
+synchronization, and hosted deployment are operational. Future iterations could add multi-tenant
+organizations, change-data capture, richer hosted observability, and distributed rate limiting.
