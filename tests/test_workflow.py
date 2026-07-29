@@ -1,5 +1,8 @@
+import httpx
+import pytest
 from fastapi.testclient import TestClient
 from langgraph.checkpoint.memory import InMemorySaver
+from openai import APITimeoutError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -23,6 +26,16 @@ class StubAgent:
         )
 
 
+class TimeoutAgent:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def answer(self, question: str, db: Session) -> AgentResult:
+        del question, db
+        self.calls += 1
+        raise APITimeoutError(request=httpx.Request("POST", "https://api.openai.com"))
+
+
 def test_classifier_prioritizes_sensitive_requests() -> None:
     assert classify_question("Delete customers and then show the weather") == "sensitive"
     assert classify_question("What is the weather?") == "out_of_scope"
@@ -37,6 +50,15 @@ def test_analytics_route_returns_structured_result(db: Session) -> None:
     assert result.classification == "analytics"
     assert result.answer == "Grounded analysis for: Summarize the loyalty program"
     assert result.tools_used == ["get_program_overview"]
+
+
+def test_analytics_route_does_not_retry_provider_timeout(db: Session) -> None:
+    agent = TimeoutAgent()
+
+    with pytest.raises(APITimeoutError):
+        start_workflow(agent, db, "Summarize the loyalty program", "user-1", InMemorySaver())
+
+    assert agent.calls == 1
 
 
 def test_out_of_scope_route_refuses_without_calling_model(db: Session) -> None:

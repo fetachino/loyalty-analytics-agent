@@ -43,6 +43,12 @@ REFUSAL = (
 )
 
 
+def _retry_transient_agent_error(exc: Exception) -> bool:
+    return isinstance(exc, (APIConnectionError, RateLimitError)) and not isinstance(
+        exc, APITimeoutError
+    )
+
+
 class WorkflowState(TypedDict, total=False):
     question: str
     owner_id: str
@@ -137,7 +143,7 @@ def build_workflow(
         analyze_node,
         retry_policy=RetryPolicy(
             max_attempts=3,
-            retry_on=(APIConnectionError, APITimeoutError, RateLimitError),
+            retry_on=_retry_transient_agent_error,
         ),
     )
     builder.add_node("approval", approval_node)
