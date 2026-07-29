@@ -13,6 +13,11 @@ All notable changes to this project are documented here.
 - CI validation and an evaluation and observability runbook
 - LangGraph classification, routing, transient retry, and human-approval workflow
 - Durable PostgreSQL checkpoints, approval expiration, replay prevention, and audit records
+- Administrator customer, purchase, and reward data-management workflows
+- Snowflake analytics provider, encrypted key-pair authentication, and scheduled synchronization
+- Secret-safe Snowflake connector diagnostics and bootstrap grant regression coverage
+- S3-compatible aggregate snapshots with checksums, presigned URLs, and local MinIO
+- Guided portfolio demonstration and expanded production case study
 
 ## 1.0.0 - 2026-07-25
 
